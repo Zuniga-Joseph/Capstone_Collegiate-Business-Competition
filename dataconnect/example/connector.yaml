@@ -1,0 +1,8 @@
+connectorId: example
+generate:
+  javascriptSdk:
+    - outputDir: ..\..\capstone\src\dataconnect-generated
+      package: "@dataconnect/generated"
+      packageJsonDir: ..\..\capstone
+      react: true
+      angular: false

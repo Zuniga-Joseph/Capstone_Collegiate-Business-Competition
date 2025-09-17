@@ -1,0 +1,43 @@
+mutation CreateUser @auth(level: NO_ACCESS) {
+  user_insert(data: {
+    username: "testuser",
+    passwordHash: "hashed_password",
+    role: "admin",
+    createdAt_expr: "request.time"
+  })
+}
+
+query ListEvents @auth(level: PUBLIC) {
+  events {
+    id
+    title
+    description
+    eventDate
+    startTime
+    endTime
+    location
+    maxAttendees
+    status
+  }
+}
+
+mutation RegisterUserForEvent($eventId: UUID!) @auth(level: USER) {
+  registration_insert(data: {
+    eventId: $eventId,
+    userId_expr: "auth.uid",
+    registeredAt_expr: "request.time"
+  })
+}
+
+query GetUserRegistrations @auth(level: USER) {
+  registrations(where: {userId: {eq_expr: "auth.uid"}}) {
+    event {
+      id
+      title
+      description
+      eventDate
+    }
+    registeredAt
+    status
+  }
+}

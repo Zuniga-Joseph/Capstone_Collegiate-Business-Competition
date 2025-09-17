@@ -1,0 +1,64 @@
+mutation SeedData @auth(level: USER) {
+  user_insertMany(data: [
+    {
+      id: "550e8400-e29b-41d4-a716-446655440000",
+      createdAt: "2024-03-15T12:00:00Z",
+      email: "test@example.com",
+      firstName: "Test",
+      lastName: "User",
+      passwordHash: "somehash",
+      role: "admin",
+      username: "testuser"
+    },
+    {
+      id: "650e8400-e29b-41d4-a716-446655440001",
+      createdAt: "2024-03-16T12:00:00Z",
+      email: "test2@example.com",
+      firstName: "Test2",
+      lastName: "User2",
+      passwordHash: "somehash2",
+      role: "member",
+      username: "testuser2"
+    }
+  ])
+  event_insertMany(data: [
+    {
+      id: "750e8400-e29b-41d4-a716-446655440002",
+      createdById: "550e8400-e29b-41d4-a716-446655440000",
+      description: "Test Event",
+      endTime: "2024-03-22T17:00:00Z",
+      eventDate: "2024-03-22",
+      location: "Test Location",
+      maxAttendees: 100,
+      startTime: "2024-03-22T14:00:00Z",
+      status: "active",
+      title: "Test Event Title"
+    },
+    {
+      id: "850e8400-e29b-41d4-a716-446655440003",
+      createdById: "650e8400-e29b-41d4-a716-446655440001",
+      description: "Test Event 2",
+      endTime: "2024-03-29T17:00:00Z",
+      eventDate: "2024-03-29",
+      location: "Test Location 2",
+      maxAttendees: 50,
+      startTime: "2024-03-29T14:00:00Z",
+      status: "active",
+      title: "Test Event Title 2"
+    }
+  ])
+  registration_insertMany(data: [
+    {
+      userId: "650e8400-e29b-41d4-a716-446655440001",
+      eventId: "750e8400-e29b-41d4-a716-446655440002",
+      registeredAt: "2024-03-17T10:00:00Z",
+      status: "registered"
+    },
+    {
+      userId: "550e8400-e29b-41d4-a716-446655440000",
+      eventId: "850e8400-e29b-41d4-a716-446655440003",
+      registeredAt: "2024-03-18T11:00:00Z",
+      status: "registered"
+    }
+  ])
+}

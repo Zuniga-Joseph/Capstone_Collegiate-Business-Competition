@@ -1,0 +1,28 @@
+type User @table {
+  username: String!
+  passwordHash: String!
+  role: String!
+  createdAt: Timestamp!
+  email: String
+  firstName: String
+  lastName: String
+}
+
+type Event @table {
+  title: String!
+  description: String!
+  eventDate: Date!
+  location: String!
+  createdBy: User!
+  status: String!
+  startTime: Timestamp
+  endTime: Timestamp
+  maxAttendees: Int
+}
+
+type Registration @table(key: ["user", "event"]) {
+  user: User!
+  event: Event!
+  registeredAt: Timestamp!
+  status: String
+}
