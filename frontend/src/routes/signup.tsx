@@ -14,7 +14,7 @@ import { InputGroup } from "@/components/ui/input-group"
 import { PasswordInput } from "@/components/ui/password-input"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
 import { confirmPasswordRules, emailPattern, passwordRules } from "@/utils"
-import Logo from "/assets/images/fastapi-logo.svg"
+import Logo from "/assets/images/BusinessLogo.png"
 
 export const Route = createFileRoute("/signup")({
   component: SignUp,
@@ -54,78 +54,95 @@ function SignUp() {
   }
 
   return (
-    <Flex flexDir={{ base: "column", md: "row" }} justify="center" h="100vh">
-      <Container
-        as="form"
-        onSubmit={handleSubmit(onSubmit)}
-        h="100vh"
-        maxW="sm"
-        alignItems="stretch"
-        justifyContent="center"
-        gap={4}
-        centerContent
+    <>
+      <Flex
+        bg="green.500"
+        bgGradient="linear-gradient(to right, #48BB78, #2F855A)"
+        h="80px"
+        align="center"
+        justify="center"
+        w="100%"
+        boxShadow="md"
       >
-        <Image
-          src={Logo}
-          alt="FastAPI logo"
-          height="auto"
-          maxW="2xs"
-          alignSelf="center"
-          mb={4}
-        />
-        <Field
-          invalid={!!errors.full_name}
-          errorText={errors.full_name?.message}
-        >
-          <InputGroup w="100%" startElement={<FiUser />}>
-            <Input
-              minLength={3}
-              {...register("full_name", {
-                required: "Full Name is required",
-              })}
-              placeholder="Full Name"
-              type="text"
-            />
-          </InputGroup>
-        </Field>
-
-        <Field invalid={!!errors.email} errorText={errors.email?.message}>
-          <InputGroup w="100%" startElement={<FiUser />}>
-            <Input
-              {...register("email", {
-                required: "Email is required",
-                pattern: emailPattern,
-              })}
-              placeholder="Email"
-              type="email"
-            />
-          </InputGroup>
-        </Field>
-        <PasswordInput
-          type="password"
-          startElement={<FiLock />}
-          {...register("password", passwordRules())}
-          placeholder="Password"
-          errors={errors}
-        />
-        <PasswordInput
-          type="confirm_password"
-          startElement={<FiLock />}
-          {...register("confirm_password", confirmPasswordRules(getValues))}
-          placeholder="Confirm Password"
-          errors={errors}
-        />
-        <Button variant="solid" type="submit" loading={isSubmitting}>
-          Sign Up
-        </Button>
-        <Text>
-          Already have an account?{" "}
-          <RouterLink to="/login" className="main-link">
-            Log In
-          </RouterLink>
+        <Text color="white" fontSize="2xl" fontWeight="bold" textAlign="center">
+          Sign up page
         </Text>
-      </Container>
-    </Flex>
+      </Flex>
+      
+      <Flex flexDir={{ base: "column", md: "row" }} justify="center" h="calc(110 - 30px)" pt={6}>
+        <Container
+          as="form"
+          onSubmit={handleSubmit(onSubmit)}
+          h="100%"
+          maxW="sm"
+          alignItems="stretch"
+          justifyContent="center"
+          gap={4}
+          centerContent
+        >
+          <Image
+            src={Logo}
+            alt="Baylor logo"
+            height="auto"
+            maxW="2xs"
+            alignSelf="center"
+            mb={6}
+            mt={4}
+          />
+          <Field
+            invalid={!!errors.full_name}
+            errorText={errors.full_name?.message}
+          >
+            <InputGroup w="100%" startElement={<FiUser />}>
+              <Input
+                minLength={3}
+                {...register("full_name", {
+                  required: "Full Name is required",
+                })}
+                placeholder="Full Name"
+                type="text"
+              />
+            </InputGroup>
+          </Field>
+
+          <Field invalid={!!errors.email} errorText={errors.email?.message}>
+            <InputGroup w="100%" startElement={<FiUser />}>
+              <Input
+                {...register("email", {
+                  required: "Email is required",
+                  pattern: emailPattern,
+                })}
+                placeholder="Email"
+                type="email"
+              />
+            </InputGroup>
+          </Field>
+          <PasswordInput
+            type="password"
+            startElement={<FiLock />}
+            {...register("password", passwordRules())}
+            placeholder="Password"
+            errors={errors}
+          />
+          <PasswordInput
+            type="confirm_password"
+            startElement={<FiLock />}
+            {...register("confirm_password", confirmPasswordRules(getValues))}
+            placeholder="Confirm Password"
+            errors={errors}
+          />
+          <Button variant="solid" type="submit" loading={isSubmitting}>
+            Sign Up
+          </Button>
+          <Text>
+            Already have an account?{" "}
+            <RouterLink to="/login" className="main-link">
+              Log In
+            </RouterLink>
+          </Text>
+        </Container>
+      </Flex>
+    </>
   )
 }
 

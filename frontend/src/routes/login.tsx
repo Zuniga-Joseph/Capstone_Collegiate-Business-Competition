@@ -1,4 +1,4 @@
-import { Container, Image, Input, Text } from "@chakra-ui/react"
+import { Container, Flex, Image, Input, Text } from "@chakra-ui/react"
 import {
   createFileRoute,
   Link as RouterLink,
@@ -13,7 +13,7 @@ import { Field } from "@/components/ui/field"
 import { InputGroup } from "@/components/ui/input-group"
 import { PasswordInput } from "@/components/ui/password-input"
 import useAuth, { isLoggedIn } from "@/hooks/useAuth"
-import Logo from "/assets/images/fastapi-logo.svg"
+import Logo from "/assets/images/BusinessLogo.png"
 import { emailPattern, passwordRules } from "../utils"
 
 export const Route = createFileRoute("/login")({
@@ -55,7 +55,23 @@ function Login() {
   }
 
   return (
-    <Container
+    <>
+      <Flex
+        bg="green.500"
+        bgGradient="linear-gradient(to right, #48BB78, #2F855A)"
+        h="80px"
+        align="center"
+        justify="center"
+        w="100%"
+        boxShadow="md"
+      >
+        <Text color="white" fontSize="2xl" fontWeight="bold" textAlign="center">
+          Login page
+        </Text>
+      </Flex>
+
+      <Flex flexDir={{ base: "column", md: "row" }} justify="center" h="calc(70vh - 30px)" pt={6}>
+        <Container
       as="form"
       onSubmit={handleSubmit(onSubmit)}
       h="100vh"
@@ -108,5 +124,7 @@ function Login() {
         </RouterLink>
       </Text>
     </Container>
+    </Flex>
+    </>
   )
 }
