@@ -14,6 +14,7 @@ import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as PostGameLeaderboardRouteImport } from './routes/post-game-leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as HomepageRouteImport } from './routes/homepage'
 import { Route as LayoutRouteImport } from './routes/_layout'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
@@ -45,6 +46,11 @@ const LoginRoute = LoginRouteImport.update({
   path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HomepageRoute = HomepageRouteImport.update({
+  id: '/homepage',
+  path: '/homepage',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
@@ -71,6 +77,7 @@ const LayoutAdminRoute = LayoutAdminRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
+  '/homepage': typeof HomepageRoute
   '/login': typeof LoginRoute
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByFullPath {
   '/': typeof LayoutIndexRoute
 }
 export interface FileRoutesByTo {
+  '/homepage': typeof HomepageRoute
   '/login': typeof LoginRoute
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
@@ -95,6 +103,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_layout': typeof LayoutRouteWithChildren
+  '/homepage': typeof HomepageRoute
   '/login': typeof LoginRoute
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
@@ -108,6 +117,7 @@ export interface FileRoutesById {
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
+    | '/homepage'
     | '/login'
     | '/post-game-leaderboard'
     | '/recover-password'
@@ -119,6 +129,7 @@ export interface FileRouteTypes {
     | '/'
   fileRoutesByTo: FileRoutesByTo
   to:
+    | '/homepage'
     | '/login'
     | '/post-game-leaderboard'
     | '/recover-password'
@@ -131,6 +142,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/_layout'
+    | '/homepage'
     | '/login'
     | '/post-game-leaderboard'
     | '/recover-password'
@@ -144,6 +156,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
+  HomepageRoute: typeof HomepageRoute
   LoginRoute: typeof LoginRoute
   PostGameLeaderboardRoute: typeof PostGameLeaderboardRoute
   RecoverPasswordRoute: typeof RecoverPasswordRoute
@@ -186,6 +199,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/homepage': {
+      id: '/homepage'
+      path: '/homepage'
+      fullPath: '/homepage'
+      preLoaderRoute: typeof HomepageRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout': {
@@ -245,6 +265,7 @@ const LayoutRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
+  HomepageRoute: HomepageRoute,
   LoginRoute: LoginRoute,
   PostGameLeaderboardRoute: PostGameLeaderboardRoute,
   RecoverPasswordRoute: RecoverPasswordRoute,

@@ -1,8 +1,9 @@
 import { Flex, Image, useBreakpointValue } from "@chakra-ui/react"
 import { Link } from "@tanstack/react-router"
 
-import Logo from "/assets/images/fastapi-logo.svg"
+import Logo from "/assets/images/BusinessLogo.png"
 import UserMenu from "./UserMenu"
+import { Button } from "../ui/button"
 
 function Navbar() {
   const display = useBreakpointValue({ base: "none", md: "flex" })
@@ -16,13 +17,20 @@ function Navbar() {
       align="center"
       bg="bg.muted"
       w="100%"
+      h="130px"
       top={0}
-      p={4}
+      px={7}
+      py={2}
     >
       <Link to="/">
-        <Image src={Logo} alt="Logo" maxW="3xs" p={2} />
+        <Image src={Logo} alt="Logo" maxW="3xs" p={10} />
       </Link>
-      <Flex gap={2} alignItems="center">
+      <Flex gap={10} alignItems = "center">
+        <Link to="/post-game-leaderboard">
+          <Button>
+            Leaderboard
+          </Button>
+        </Link>
         <UserMenu />
       </Flex>
     </Flex>
