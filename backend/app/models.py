@@ -1,7 +1,93 @@
 import uuid
+from datetime import datetime, timezone, timedelta
+from typing import List, Optional
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
+
+
+# shared properties
+class LeaderboardBase(SQLModel):
+    event_name: str = Field(min_length=1, max_length=255)
+
+# properties to receive on leaderboard creation
+class LeaderboardCreate(LeaderboardBase):
+    pass
+
+# properties to receive on leaderboard update
+class LeaderboardUpdate(SQLModel):
+    event_name: str | None = Field(default=None, min_length=1, max_length=255)
+
+class Leaderboard(LeaderboardBase, table=True):
+    event_id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    scores: List["Scores"] = Relationship(back_populates="leaderboard")
+
+# properties to return w/ API
+class LeaderboardPublic(LeaderboardBase):
+    event_id: uuid.UUID
+    created_at: datetime
+
+# shared properties for scores
+class ScoresBase(SQLModel):
+    duration: timedelta = Field()
+    challenge_score: int = Field(default=0, ge=0)
+    cg_score: int = Field(default=0, ge=0)
+    si_score: int = Field(default=0, ge=0)
+    mr_score: int = Field(default=0, ge=0)
+
+# properties to receive on score creation
+class ScoresCreate(ScoresBase):
+    event_id: uuid.UUID
+    user_id: uuid.UUID
+
+# properties to receive on score update
+class ScoresUpdate(SQLModel):
+    duration: timedelta | None = Field(default=None)
+    challenge_score: int | None = Field(default=None, ge=0)
+    cg_score: int | None = Field(default=None, ge=0)
+    si_score: int | None = Field(default=None, ge=0)
+    mr_score: int | None = Field(default=None, ge=0)
+
+class Scores(ScoresBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    event_id: uuid.UUID = Field(foreign_key="leaderboard.event_id", nullable=False, ondelete="CASCADE")
+    user_id: uuid.UUID = Field(foreign_key="user.id", nullable=False, ondelete="CASCADE")
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+    # relationships
+    leaderboard: Optional[Leaderboard] = Relationship(back_populates="scores")
+    user: Optional["User"] = Relationship() # forward ref to user
+
+class ScoresPublic(ScoresBase):
+    id: uuid.UUID
+    event_id: uuid.UUID
+    user_id: uuid.UUID
+    created_at: datetime
+
+class ScoresPublicWithUser(ScoresPublic):
+    user: "UserPublic | None" = None
+
+class ScoresPublicWithLeaderboard(ScoresPublic):
+    leaderboard: LeaderboardPublic | None = None
+
+class ScoresListPublic(SQLModel):
+    data: list[ScoresPublic]
+    count: int
+
+# class Scores(SQLModel):
+#     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+#     event_id: uuid.UUID = Field(foreign_key="leaderboard.event_id", nullable=False)
+#     # REFERENCE USER TABLE
+#     user_id: uuid.UUID = Field(nullable=False)
+#     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+#     duration: timedelta = Field(nullable=False)
+#     challenge_score: int = Field(default=0)
+#     cg_score: int = Field(default=0)
+#     si_score: int = Field(default=0)
+#     mr_score: int = Field(default=0)
+#     # ... Look into this further...
+#     leaderboard: Optional[Leaderboard] = Relationship(back_populates="scores")
 
 
 # Shared properties
@@ -44,6 +130,7 @@ class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    scores: list["Scores"] = Relationship(back_populates="user")
 
 
 # Properties to return via API, id is always required

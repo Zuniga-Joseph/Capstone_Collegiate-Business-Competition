@@ -6,6 +6,13 @@ from sqlmodel import Session, select
 from app.core.security import get_password_hash, verify_password
 from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
 
+from app.models import LeaderboardCreate, Leaderboard, LeaderboardUpdate, ScoresCreate, Scores, ScoresUpdate
+
+
+# =========================================================================== #
+# USER CRUD
+# =========================================================================== #
+
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
     db_obj = User.model_validate(
@@ -52,3 +59,91 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -
     session.commit()
     session.refresh(db_item)
     return db_item
+
+
+# =========================================================================== #
+# LEADERBOARD CRUD
+# =========================================================================== #
+
+
+def create_leaderboard(*, session: Session, leaderboard_in: LeaderboardCreate) -> Leaderboard:
+    db_leaderboard = Leaderboard.model_validate(leaderboard_in)
+    session.add(db_leaderboard)
+    session.commit()
+    session.refresh(db_leaderboard)
+    return db_leaderboard
+
+def get_leaderboard(*, session: Session, event_id: uuid.UUID) -> Leaderboard | None:
+    return session.get(Leaderboard, event_id)
+
+def get_leaderboards(*, session: Session, skip: int = 0, limit: int = 100) -> list[Leaderboard]:
+    statement = select(Leaderboard).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+def update_leaderboard(
+    *, session: Session, db_leaderboard: Leaderboard, leaderboard_in: LeaderboardUpdate
+) -> Leaderboard:
+    update_data = leaderboard_in.model_dump(exclude_unset=True)
+    db_leaderboard.sqlmodel_update(update_data)
+    session.add(db_leaderboard)
+    session.commit()
+    session.refresh(db_leaderboard)
+    return db_leaderboard
+
+def delete_leaderboard(*, session: Session, event_id: uuid.UUID) -> bool:
+    leaderboard = session.get(Leaderboard, event_id)
+    if leaderboard:
+        session.delete(leaderboard)
+        session.commit()
+        return True
+    return False
+
+
+# =========================================================================== #
+# SCORES CRUD
+# =========================================================================== #
+
+
+def create_score(*, session: Session, score_in: ScoresCreate) -> Scores:
+    db_score = Scores.model_validate(score_in)
+    session.add(db_score)
+    session.commit()
+    session.refresh(db_score)
+    return db_score
+
+def get_score(*, session: Session, score_id: uuid.UUID) -> Scores | None:
+    return session.get(Scores, score_id)
+
+def get_scores(*, session: Session, skip: int = 0, limit: int = 100) -> list[Scores]:
+    statement = select(Scores).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+def get_scores_by_leaderboard(
+    *, session: Session, event_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> list[Scores]:
+    statement = select(Scores).where(Scores.event_id == event_id).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+def get_scores_by_user(
+    *, session: Session, user_id: uuid.UUID, skip: int = 0, limit: int = 100
+) -> list[Scores]:
+    statement = select(Scores).where(Scores.user_id == user_id).offset(skip).limit(limit)
+    return session.exec(statement).all()
+
+def update_score(
+    *, session: Session, db_score: Scores, score_in: ScoresUpdate
+) -> Scores:
+    update_data = score_in.model_dump(exclude_unset=True)
+    db_score.sqlmodel_update(update_data)
+    session.add(db_score)
+    session.commit()
+    session.refresh(db_score)
+    return db_score
+
+def delete_score(*, session: Session, score_id: uuid.UUID) -> bool:
+    score = session.get(Scores, score_id)
+    if score:
+        session.delete(score)
+        session.commit()
+        return True
+    return False
