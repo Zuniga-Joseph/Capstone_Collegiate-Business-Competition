@@ -1,11 +1,20 @@
-type User @table {
-  username: String!
-  passwordHash: String!
-  role: String!
-  createdAt: Timestamp!
+"""
+Updated user accounts for the system.
+- loginId is the username/login field (unique).
+- passwordHash stores the Argon2/BCrypt hash (never plaintext).
+- Every user is tied to exactly one School.
+- Tracks registration + login timestamps and optional profile info.
+"""
+type User @table(key: ["userId"]) {
+  userId: String!          # UUID as String
+  loginId: String!         # unique login field
+  passwordHash: String!    # hashed password (>=20 chars)
+  school: School!          # belongs to one School
+  registeredAt: Timestamp! # set on sign-up
+  lastLoginAt: Timestamp!  # updated on each login
+  displayName: String
   email: String
-  firstName: String
-  lastName: String
+  avatarUrl: String
 }
 
 type Event @table {
@@ -25,4 +34,81 @@ type Registration @table(key: ["user", "event"]) {
   event: Event!
   registeredAt: Timestamp!
   status: String
+}
+
+"""
+Scalars
+-------
+- UUIDs are stored as Strings because Data Connect doesn’t have a native UUID type.
+  We’ll always use canonical UUID text (e.g. "550e8400-e29b-41d4-a716-446655440000").
+- For dates/times we use the built-in `Timestamp` scalar (ISO 8601 format).
+"""
+enum Role {
+  MODERATOR
+  INSTRUCTOR
+  SCHOOL
+  STUDENT
+}
+
+"""
+School represents an institution (like a university or high school).
+Each school has:
+- a globally unique UUID (`schoolId`)
+- a human-readable shorthand (like "ut-austin" or "demo-u") for use in URLs or quick references.
+"""
+type School @table(key: ["schoolId"]) {
+  schoolId: String!        # UUID as String
+  name: String!
+  shorthand: String!       # unique short identifier
+  createdAt: Timestamp!
+}
+
+"""
+Helper table to enforce uniqueness of shorthand.
+Maps shorthand -> School. Prevents duplicate shorthand values.
+"""
+type SchoolByShorthand @table(key: ["shorthand"]) {
+  shorthand: String!
+  school: School!
+}
+
+"""
+Helper table to enforce uniqueness of loginId.
+Maps loginId -> User.
+"""
+type UserByLogin @table(key: ["loginId"]) {
+  loginId: String!
+  user: User!
+}
+
+"""
+UserRole acts as a join table for roles.
+- A user can have one or more roles.
+- Composite key (user, role) ensures no duplicates.
+"""
+type UserRole @table(key: ["user", "role"]) {
+  user: User!
+  role: Role!
+}
+
+"""
+Question represents a quiz or assessment item.
+- prompt: the text of the question
+- correctAnswer: the single correct option
+- incorrectAnswers: 1–5 wrong answers (stored as a list; we enforce uniqueness/size in code)
+- pointValue: score awarded for correct answer
+- tags: optional labels like "biology" or "math"
+- createdBy: optional author link to User
+- createdAt/updatedAt: timestamps for auditing
+"""
+type Question @table(key: ["questionId"]) {
+  questionId: String!          # UUID as String
+  prompt: String!              # the question text
+  correctAnswer: String!       # the right answer
+  incorrectAnswers: [String!]! # 1–5 wrong answers (validate app-side)
+  pointValue: Int!             # must be >= 0 (validate app-side)
+  tags: [String!]              # optional tags
+  createdBy: User
+  createdAt: Timestamp!
+  updatedAt: Timestamp!
 }
