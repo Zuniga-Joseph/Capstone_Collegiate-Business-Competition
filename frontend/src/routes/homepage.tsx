@@ -2,6 +2,9 @@ import { Container, Flex, Text, Box, Image, Button } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
 import { FiUsers, FiTrendingUp, FiClock } from "react-icons/fi"
 import { useState } from "react"
+import { Link } from "@tanstack/react-router"
+
+import Logo from "/assets/images/BusinessLogo.png"
 
 export const Route = createFileRoute("/homepage")({
   component: Homepage,
@@ -16,15 +19,22 @@ function Homepage() {
       <Flex
         bg="green.500"
         bgGradient="linear-gradient(to right, #48BB78, #2F855A)"
-        h="80px"
+        h="130px"
         align="center"
-        justify="center"
+        justify="space-between"
         w="100%"
         boxShadow="md"
+        px={5}
       >
-        <Text color="white" fontSize="2xl" fontWeight="bold" textAlign="center">
-          Competition Hub
-        </Text>
+        <Link to="/homepage">
+          <Image src={Logo} alt="Logo" maxW="3xs" p={12} />
+        </Link>
+
+        <Link to="/">
+          <Text color="white" fontSize="2xl" fontWeight="bold" textAlign="right">
+            Hub
+          </Text>
+        </Link>
       </Flex>
 
       <Flex justify="center" minH="calc(100vh - 80px)" bg="gray.50" pt={8}>
@@ -278,7 +288,7 @@ function Homepage() {
             >
               <Box textAlign="center">
                 <Text fontSize="3xl" fontWeight="bold" color="green.500">
-                  4
+                  3
                 </Text>
                 <Text color="gray.600" fontWeight="medium">
                   Categories
