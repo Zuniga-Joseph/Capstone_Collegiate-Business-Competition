@@ -1,0 +1,14 @@
+[00:00] Okay team, I think our goal is to maximize user retention. Does everyone agree?
+[00:08] Thanks for sharing those numbers earlier — that really helped me see where users drop off.
+[00:16] I might be wrong, but maybe we should simplify onboarding first.
+[00:24] I understand what you’re saying, though — the marketing funnel matters too.
+[00:32] How about we test both ideas and compare?
+[00:40] We missed that detail last round, but we adapted quickly — I think we’ll handle this too.
+[00:48] I can apply that feedback right now; maybe I’ll rephrase the question.
+[00:56] Yeah, exactly — could you clarify what the success metric would be?
+[01:04] Good point; we should align on a single goal.
+[01:12] I appreciate the reminder — I’ll document the process this time.
+[01:20] Let’s lock in option B; it gives us a faster learning loop.
+[01:28] Even if it’s not perfect, we’ll iterate and improve next round.
+[01:36] I like how everyone’s contributing — this has been really collaborative.
+[01:44] Thank you all for the feedback; I’ll reflect it in our next sprint.
