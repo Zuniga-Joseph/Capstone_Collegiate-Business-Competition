@@ -22,7 +22,7 @@ function Navbar() {
       px={7}
       py={2}
     >
-      <Link to="/">
+      <Link to="/homepage">
         <Image src={Logo} alt="Logo" maxW="3xs" p={10} />
       </Link>
       <Flex gap={10} alignItems = "center">
