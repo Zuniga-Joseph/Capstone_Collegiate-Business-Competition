@@ -11,6 +11,9 @@ class UserBase(SQLModel):
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
 
+    school: str | None = Field(default=None, max_length=255)
+    major: str | None = Field(default=None, max_length=255)
+    gpa: float | None = Field(default=None)
 
 # Properties to receive via API on creation
 class UserCreate(UserBase):
@@ -22,16 +25,28 @@ class UserRegister(SQLModel):
     password: str = Field(min_length=8, max_length=40)
     full_name: str | None = Field(default=None, max_length=255)
 
+    school: str | None = Field(default=None, max_length=255)
+    major: str | None = Field(default=None, max_length=255)
+    gpa: float | None = Field(default=None)
+
 
 # Properties to receive via API on update, all are optional
 class UserUpdate(UserBase):
     email: EmailStr | None = Field(default=None, max_length=255)  # type: ignore
     password: str | None = Field(default=None, min_length=8, max_length=40)
 
+    school: str | None = Field(default=None, max_length=255)
+    major: str | None = Field(default=None, max_length=255)
+    gpa: float | None = None
+
 
 class UserUpdateMe(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
+
+    school: str | None = Field(default=None, max_length=255)
+    major: str | None = Field(default=None, max_length=255)
+    gpa: float | None = None
 
 
 class UpdatePassword(SQLModel):
