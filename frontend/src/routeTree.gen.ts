@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as Sentiment_analysis_dashRouteImport } from './routes/sentiment_analysis_dash'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as RecruiterDashboardRouteImport } from './routes/recruiter-dashboard'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
@@ -25,6 +26,11 @@ import { Route as LayoutAdminRouteImport } from './routes/_layout/admin'
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const Sentiment_analysis_dashRoute = Sentiment_analysis_dashRouteImport.update({
+  id: '/sentiment_analysis_dash',
+  path: '/sentiment_analysis_dash',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/recover-password': typeof RecoverPasswordRoute
   '/recruiter-dashboard': typeof RecruiterDashboardRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sentiment_analysis_dash': typeof Sentiment_analysis_dashRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
   '/items': typeof LayoutItemsRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/recover-password': typeof RecoverPasswordRoute
   '/recruiter-dashboard': typeof RecruiterDashboardRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sentiment_analysis_dash': typeof Sentiment_analysis_dashRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
   '/items': typeof LayoutItemsRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/recover-password': typeof RecoverPasswordRoute
   '/recruiter-dashboard': typeof RecruiterDashboardRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/sentiment_analysis_dash': typeof Sentiment_analysis_dashRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
   '/_layout/items': typeof LayoutItemsRoute
@@ -132,6 +141,7 @@ export interface FileRouteTypes {
     | '/recover-password'
     | '/recruiter-dashboard'
     | '/reset-password'
+    | '/sentiment_analysis_dash'
     | '/signup'
     | '/admin'
     | '/items'
@@ -145,6 +155,7 @@ export interface FileRouteTypes {
     | '/recover-password'
     | '/recruiter-dashboard'
     | '/reset-password'
+    | '/sentiment_analysis_dash'
     | '/signup'
     | '/admin'
     | '/items'
@@ -159,6 +170,7 @@ export interface FileRouteTypes {
     | '/recover-password'
     | '/recruiter-dashboard'
     | '/reset-password'
+    | '/sentiment_analysis_dash'
     | '/signup'
     | '/_layout/admin'
     | '/_layout/items'
@@ -174,6 +186,7 @@ export interface RootRouteChildren {
   RecoverPasswordRoute: typeof RecoverPasswordRoute
   RecruiterDashboardRoute: typeof RecruiterDashboardRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  Sentiment_analysis_dashRoute: typeof Sentiment_analysis_dashRoute
   SignupRoute: typeof SignupRoute
 }
 
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sentiment_analysis_dash': {
+      id: '/sentiment_analysis_dash'
+      path: '/sentiment_analysis_dash'
+      fullPath: '/sentiment_analysis_dash'
+      preLoaderRoute: typeof Sentiment_analysis_dashRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -291,6 +311,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecoverPasswordRoute: RecoverPasswordRoute,
   RecruiterDashboardRoute: RecruiterDashboardRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  Sentiment_analysis_dashRoute: Sentiment_analysis_dashRoute,
   SignupRoute: SignupRoute,
 }
 export const routeTree = rootRouteImport
