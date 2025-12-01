@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as Sentiment_analysis_dashRouteImport } from './routes/sentiment_analysis_dash'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RecruiterQuestionEntryRouteImport } from './routes/recruiter-question-entry'
 import { Route as RecruiterDashboardRouteImport } from './routes/recruiter-dashboard'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as PostGameLeaderboardRouteImport } from './routes/post-game-leaderboard'
@@ -36,6 +37,11 @@ const Sentiment_analysis_dashRoute = Sentiment_analysis_dashRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecruiterQuestionEntryRoute = RecruiterQuestionEntryRouteImport.update({
+  id: '/recruiter-question-entry',
+  path: '/recruiter-question-entry',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecruiterDashboardRoute = RecruiterDashboardRouteImport.update({
@@ -94,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/recruiter-dashboard': typeof RecruiterDashboardRoute
+  '/recruiter-question-entry': typeof RecruiterQuestionEntryRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sentiment_analysis_dash': typeof Sentiment_analysis_dashRoute
   '/signup': typeof SignupRoute
@@ -108,6 +115,7 @@ export interface FileRoutesByTo {
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/recruiter-dashboard': typeof RecruiterDashboardRoute
+  '/recruiter-question-entry': typeof RecruiterQuestionEntryRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sentiment_analysis_dash': typeof Sentiment_analysis_dashRoute
   '/signup': typeof SignupRoute
@@ -124,6 +132,7 @@ export interface FileRoutesById {
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
   '/recruiter-dashboard': typeof RecruiterDashboardRoute
+  '/recruiter-question-entry': typeof RecruiterQuestionEntryRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sentiment_analysis_dash': typeof Sentiment_analysis_dashRoute
   '/signup': typeof SignupRoute
@@ -140,6 +149,7 @@ export interface FileRouteTypes {
     | '/post-game-leaderboard'
     | '/recover-password'
     | '/recruiter-dashboard'
+    | '/recruiter-question-entry'
     | '/reset-password'
     | '/sentiment_analysis_dash'
     | '/signup'
@@ -154,6 +164,7 @@ export interface FileRouteTypes {
     | '/post-game-leaderboard'
     | '/recover-password'
     | '/recruiter-dashboard'
+    | '/recruiter-question-entry'
     | '/reset-password'
     | '/sentiment_analysis_dash'
     | '/signup'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/post-game-leaderboard'
     | '/recover-password'
     | '/recruiter-dashboard'
+    | '/recruiter-question-entry'
     | '/reset-password'
     | '/sentiment_analysis_dash'
     | '/signup'
@@ -185,6 +197,7 @@ export interface RootRouteChildren {
   PostGameLeaderboardRoute: typeof PostGameLeaderboardRoute
   RecoverPasswordRoute: typeof RecoverPasswordRoute
   RecruiterDashboardRoute: typeof RecruiterDashboardRoute
+  RecruiterQuestionEntryRoute: typeof RecruiterQuestionEntryRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   Sentiment_analysis_dashRoute: typeof Sentiment_analysis_dashRoute
   SignupRoute: typeof SignupRoute
@@ -211,6 +224,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recruiter-question-entry': {
+      id: '/recruiter-question-entry'
+      path: '/recruiter-question-entry'
+      fullPath: '/recruiter-question-entry'
+      preLoaderRoute: typeof RecruiterQuestionEntryRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recruiter-dashboard': {
@@ -310,6 +330,7 @@ const rootRouteChildren: RootRouteChildren = {
   PostGameLeaderboardRoute: PostGameLeaderboardRoute,
   RecoverPasswordRoute: RecoverPasswordRoute,
   RecruiterDashboardRoute: RecruiterDashboardRoute,
+  RecruiterQuestionEntryRoute: RecruiterQuestionEntryRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   Sentiment_analysis_dashRoute: Sentiment_analysis_dashRoute,
   SignupRoute: SignupRoute,

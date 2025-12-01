@@ -1,5 +1,4 @@
-from typing import Any
-
+from typing import Optional, Any, Dict
 from nltk import sent_tokenize, word_tokenize, pos_tag
 from nltk.sentiment import SentimentIntensityAnalyzer
 import nltk, re
@@ -169,7 +168,7 @@ def modal_counts(pos):
     return sum(1 for (_, tag) in pos if tag == "MD")
 
 
-def measure_constructs_from_text(text: str, tfidf_feats: dict | None = None) -> dict[str, Any]:
+def measure_constructs_from_text(text: str, tfidf_feats: Optional[Dict] = None) -> Dict[str, Any]:
     """
     Strictly individual analysis:
       input: a single person's transcript (string)
