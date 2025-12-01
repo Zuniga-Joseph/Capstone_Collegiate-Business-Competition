@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
-import { FormEvent, useState } from "react"
+import { FormEvent, useState, ChangeEvent } from "react"
 
 export const Route = createFileRoute("/recruiter-question-entry")({
   component: QuestionEntryPage,
@@ -11,6 +11,14 @@ interface AnswerOption {
   id: number
   text: string
   isCorrect: boolean
+}
+
+interface QuestionPayload {
+  question_text: string
+  category: string
+  difficulty: Difficulty
+  options: { text: string; is_correct: boolean }[]
+  explanation: string | null
 }
 
 function QuestionEntryPage() {
@@ -28,6 +36,17 @@ function QuestionEntryPage() {
   const [error, setError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
+  // CSV state
+  const [importError, setImportError] = useState<string | null>(null)
+  const [importSuccess, setImportSuccess] = useState<string | null>(null)
+  const [importedCount, setImportedCount] = useState<number | null>(null)
+  const [isImporting, setIsImporting] = useState(false)
+
+  // NEW: questions waiting for confirmation
+  const [pendingImportQuestions, setPendingImportQuestions] = useState<
+    QuestionPayload[] | null
+  >(null)
+
   const handleOptionTextChange = (id: number, value: string) => {
     setOptions((prev) =>
       prev.map((opt) => (opt.id === id ? { ...opt, text: value } : opt)),
@@ -43,10 +62,6 @@ function QuestionEntryPage() {
   const validateForm = (): string | null => {
     if (!questionText.trim()) return "Question text is required."
     if (!category.trim()) return "Category is required."
-
-    if (options.length !== 4) {
-      return "Exactly four answer options are required."
-    }
 
     const nonEmptyOptions = options.filter((opt) => opt.text.trim())
     if (nonEmptyOptions.length !== 4) {
@@ -74,7 +89,7 @@ function QuestionEntryPage() {
       return
     }
 
-    const payload = {
+    const payload: QuestionPayload = {
       question_text: questionText.trim(),
       category: category.trim(),
       difficulty,
@@ -87,24 +102,15 @@ function QuestionEntryPage() {
 
     try {
       setIsSubmitting(true)
-      // TODO: replace this with your real API call
-      // const res = await fetch("http://localhost:8000/api/questions", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify(payload),
-      // })
-      // if (!res.ok) {
-      //   const data = await res.json()
-      //   throw new Error(data.detail ?? "Failed to create question")
-      // }
 
-      console.log("Submitting question payload:", payload)
+      // TODO: replace with your backend call
+      console.log("Submitting single question:", payload)
 
       setSuccessMessage("Question saved successfully.")
       setQuestionText("")
       setCategory("")
-      setDifficulty("medium")
       setExplanation("")
+      setDifficulty("medium")
       setOptions([
         { id: 1, text: "", isCorrect: true },
         { id: 2, text: "", isCorrect: false },
@@ -112,93 +118,257 @@ function QuestionEntryPage() {
         { id: 4, text: "", isCorrect: false },
       ])
     } catch (err: any) {
-      setError(err.message || "Something went wrong while saving the question.")
+      setError(err.message || "Something went wrong.")
     } finally {
       setIsSubmitting(false)
     }
   }
 
+  // CSV IMPORT HANDLER
+  const handleCsvFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    setImportError(null)
+    setImportSuccess(null)
+    setImportedCount(null)
+    setPendingImportQuestions(null)
+
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    try {
+      setIsImporting(true)
+      const text = await file.text()
+      const questions = parseCsvToQuestions(text)
+
+      console.log("Parsed questions from CSV:", questions)
+
+      setPendingImportQuestions(questions)
+      setImportedCount(questions.length)
+      setImportSuccess(
+        `Parsed ${questions.length} question(s). Review them below before submitting.`,
+      )
+    } catch (err: any) {
+      setImportError(err.message || "Failed to parse CSV.")
+    } finally {
+      setIsImporting(false)
+      e.target.value = ""
+    }
+  }
+
+  /**
+   * CSV FORMAT (NO TIME LIMIT):
+   *
+   * question_text,category,difficulty,option1,option2,option3,option4,correct_option
+   */
+  const parseCsvToQuestions = (csvText: string): QuestionPayload[] => {
+    const lines = csvText
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+
+    if (lines.length < 2) {
+      throw new Error("CSV must include a header + at least 1 data row.")
+    }
+
+    const header = lines[0].split(",").map((h) => h.trim().toLowerCase())
+    const expected = [
+      "question_text",
+      "category",
+      "difficulty",
+      "option1",
+      "option2",
+      "option3",
+      "option4",
+      "correct_option",
+    ]
+
+    if (expected.some((col, i) => header[i] !== col)) {
+      throw new Error(
+        `CSV header must be: ${expected.join(",")}. Got: ${header.join(",")}`,
+      )
+    }
+
+    const validDifficulties: Difficulty[] = ["easy", "medium", "hard"]
+    const questions: QuestionPayload[] = []
+
+    for (let i = 1; i < lines.length; i++) {
+      const cols = lines[i].split(",").map((c) => c.trim())
+      if (cols.length < expected.length) {
+        throw new Error(`Row ${i + 1}: missing columns.`)
+      }
+
+      const [
+        qText,
+        category,
+        difficultyRaw,
+        option1,
+        option2,
+        option3,
+        option4,
+        correctRaw,
+      ] = cols
+
+      if (!qText) throw new Error(`Row ${i + 1}: question_text required.`)
+      if (!category) throw new Error(`Row ${i + 1}: category required.`)
+
+      const difficultyLower = difficultyRaw.toLowerCase()
+      if (!validDifficulties.includes(difficultyLower as Difficulty)) {
+        throw new Error(
+          `Row ${i + 1}: difficulty must be easy, medium, or hard.`,
+        )
+      }
+
+      const opts = [option1, option2, option3, option4]
+      opts.forEach((o, idx) => {
+        if (!o) throw new Error(`Row ${i + 1}: option${idx + 1} required.`)
+      })
+
+      const correctIdx = Number(correctRaw)
+      if (!Number.isInteger(correctIdx) || correctIdx < 1 || correctIdx > 4) {
+        throw new Error(
+          `Row ${i + 1}: correct_option must be a number 1–4.`,
+        )
+      }
+
+      questions.push({
+        question_text: qText,
+        category,
+        difficulty: difficultyLower as Difficulty,
+        explanation: null,
+        options: opts.map((o, idx) => ({
+          text: o,
+          is_correct: idx + 1 === correctIdx,
+        })),
+      })
+    }
+
+    return questions
+  }
+
+  // NEW: user clicks "Submit all questions" on confirmation screen
+  const handleConfirmImport = async () => {
+    if (!pendingImportQuestions || pendingImportQuestions.length === 0) {
+      setImportError("No questions to submit.")
+      return
+    }
+
+    setImportError(null)
+    setImportSuccess(null)
+
+    try {
+      setIsImporting(true)
+
+      // TODO: replace with your real bulk backend call
+      // Example:
+      // const res = await fetch("http://localhost:8000/api/questions/bulk", {
+      //   method: "POST",
+      //   headers: { "Content-Type": "application/json" },
+      //   body: JSON.stringify({ questions: pendingImportQuestions }),
+      // })
+      // if (!res.ok) {
+      //   const data = await res.json()
+      //   throw new Error(data.detail ?? "Bulk import failed")
+      // }
+
+      console.log("Submitting bulk questions:", pendingImportQuestions)
+
+      setImportSuccess(
+        `Successfully submitted ${pendingImportQuestions.length} question(s).`,
+      )
+      setImportedCount(pendingImportQuestions.length)
+      setPendingImportQuestions(null)
+    } catch (err: any) {
+      setImportError(err.message || "Failed to submit imported questions.")
+    } finally {
+      setIsImporting(false)
+    }
+  }
+
+  // NEW: user cancels / discards imported questions
+  const handleCancelImport = () => {
+    setPendingImportQuestions(null)
+    setImportSuccess("Import canceled. No questions were submitted.")
+    setImportError(null)
+  }
+
   return (
     <div
       style={{
-        maxWidth: "800px",
+        maxWidth: "1000px",
         margin: "0 auto",
         padding: "24px",
         display: "flex",
         flexDirection: "column",
-        gap: "16px",
+        gap: "24px",
       }}
     >
       <h1 style={{ fontSize: "1.8rem", fontWeight: 600 }}>
         Question Entry (Recruiter)
       </h1>
 
-      <p style={{ color: "#555", marginBottom: "8px" }}>
-        Use this screen to add new contest questions. Each question must have
-        exactly four answer options and one correct answer.
-      </p>
-
-      {error && (
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "6px",
-            backgroundColor: "#ffe5e5",
-            color: "#b00020",
-            fontSize: "0.9rem",
-          }}
-        >
-          {error}
-        </div>
-      )}
-
-      {successMessage && (
-        <div
-          style={{
-            padding: "12px 16px",
-            borderRadius: "6px",
-            backgroundColor: "#e6ffed",
-            color: "#137333",
-            fontSize: "0.9rem",
-          }}
-        >
-          {successMessage}
-        </div>
-      )}
-
-      <form
-        onSubmit={handleSubmit}
+      {/* SINGLE QUESTION ENTRY */}
+      <section
         style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "16px",
           border: "1px solid #ddd",
-          borderRadius: "8px",
           padding: "16px 20px",
+          borderRadius: "8px",
           background: "#fff",
         }}
       >
-        {/* Question Text */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <label style={{ fontWeight: 600 }}>
-            Question Text <span style={{ color: "#b00020" }}>*</span>
-          </label>
-          <textarea
-            value={questionText}
-            onChange={(e) => setQuestionText(e.target.value)}
-            rows={4}
-            placeholder="Enter the question the candidate will see..."
-            style={{
-              padding: "8px",
-              borderRadius: "6px",
-              border: "1px solid #ccc",
-              resize: "vertical",
-              fontFamily: "inherit",
-            }}
-          />
-        </div>
+        <h2 style={{ fontSize: "1.2rem", fontWeight: 600 }}>
+          Add a Single Question
+        </h2>
 
-        {/* Category & Difficulty */}
+        {error && (
+          <div
+            style={{
+              backgroundColor: "#ffe5e5",
+              padding: "10px",
+              borderRadius: "6px",
+              color: "#b00020",
+              marginBottom: "12px",
+            }}
+          >
+            {error}
+          </div>
+        )}
+
+        {successMessage && (
+          <div
+            style={{
+              backgroundColor: "#e6ffed",
+              padding: "10px",
+              borderRadius: "6px",
+              color: "#137333",
+              marginBottom: "12px",
+            }}
+          >
+            {successMessage}
+          </div>
+        )}
+
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "16px" }}
+        >
+          {/* Question */}
+          <div>
+            <label style={{ fontWeight: 600 }}>
+              Question Text <span style={{ color: "red" }}>*</span>
+            </label>
+            <textarea
+              value={questionText}
+              onChange={(e) => setQuestionText(e.target.value)}
+              rows={3}
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+              }}
+            />
+          </div>
+
+        {/* Category + Difficulty */}
         <div
           style={{
             display: "flex",
@@ -209,21 +379,21 @@ function QuestionEntryPage() {
           <div
             style={{
               flex: 1,
-              minWidth: "220px",
+              minWidth: "260px",
               display: "flex",
               flexDirection: "column",
               gap: "4px",
             }}
           >
             <label style={{ fontWeight: 600 }}>
-              Category <span style={{ color: "#b00020" }}>*</span>
+              Category <span style={{ color: "red" }}>*</span>
             </label>
             <input
               type="text"
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              placeholder="e.g. Communication, Leadership, Teamwork"
               style={{
+                width: "100%",
                 padding: "8px",
                 borderRadius: "6px",
                 border: "1px solid #ccc",
@@ -233,7 +403,7 @@ function QuestionEntryPage() {
 
           <div
             style={{
-              width: "200px",
+              minWidth: "180px",
               display: "flex",
               flexDirection: "column",
               gap: "4px",
@@ -256,17 +426,13 @@ function QuestionEntryPage() {
           </div>
         </div>
 
-        {/* Answer Options */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <label style={{ fontWeight: 600 }}>
-            Answer Options (Multiple Choice){" "}
-            <span style={{ color: "#b00020" }}>*</span>
-          </label>
-          <p style={{ fontSize: "0.85rem", color: "#555" }}>
-            Provide exactly four options and select which one is correct.
-          </p>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {/* Options */}
+          <div style={{ marginTop: "8px" }}>
+            <label style={{ fontWeight: 600 }}>
+              Answer Options (4 required)
+            </label>
+
             {options.map((opt, index) => (
               <div
                 key={opt.id}
@@ -274,72 +440,257 @@ function QuestionEntryPage() {
                   display: "flex",
                   alignItems: "center",
                   gap: "8px",
+                  marginTop: "6px",
                 }}
               >
                 <input
                   type="radio"
-                  name="correctOption"
+                  name="correct"
                   checked={opt.isCorrect}
                   onChange={() => handleSetCorrect(opt.id)}
                 />
                 <input
                   type="text"
                   value={opt.text}
+                  placeholder={`Option ${index + 1}`}
                   onChange={(e) =>
                     handleOptionTextChange(opt.id, e.target.value)
                   }
-                  placeholder={`Option ${index + 1} (required)`}
                   style={{
                     flex: 1,
                     padding: "8px",
                     borderRadius: "6px",
                     border:
                       opt.text.trim() === ""
-                        ? "1px solid #b00020"
+                        ? "1px solid red"
                         : "1px solid #ccc",
                   }}
                 />
               </div>
             ))}
           </div>
-        </div>
 
-        {/* Explanation */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
-          <label style={{ fontWeight: 600 }}>Explanation / Notes (optional)</label>
-          <textarea
-            value={explanation}
-            onChange={(e) => setExplanation(e.target.value)}
-            rows={3}
-            placeholder="Add an explanation for the correct answer, or notes for other recruiters."
+          {/* Explanation */}
+          <div>
+            <label style={{ fontWeight: 600 }}>Explanation (optional)</label>
+            <textarea
+              value={explanation}
+              onChange={(e) => setExplanation(e.target.value)}
+              rows={2}
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+              }}
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={isSubmitting}
             style={{
-              padding: "8px",
+              backgroundColor: "#2563eb",
+              color: "white",
+              padding: "10px 18px",
               borderRadius: "6px",
-              border: "1px solid #ccc",
-              resize: "vertical",
-              fontFamily: "inherit",
+              border: "none",
+              cursor: isSubmitting ? "not-allowed" : "pointer",
+              marginTop: "6px",
             }}
-          />
-        </div>
+          >
+            {isSubmitting ? "Saving..." : "Save Question"}
+          </button>
+        </form>
+      </section>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
+      {/* CSV IMPORT */}
+      <section
+        style={{
+          border: "1px solid #ddd",
+          padding: "16px 20px",
+          borderRadius: "8px",
+          background: "#fafafa",
+        }}
+      >
+        <h2 style={{ fontSize: "1.2rem", fontWeight: 600 }}>
+          Bulk Import via CSV
+        </h2>
+
+        <p style={{ fontSize: "0.9rem", color: "#555" }}>
+          CSV columns must be exactly:
+        </p>
+
+        <code
           style={{
-            marginTop: "8px",
-            padding: "10px 18px",
-            borderRadius: "8px",
-            border: "none",
-            backgroundColor: isSubmitting ? "#aaa" : "#2563eb",
-            color: "#fff",
-            fontWeight: 600,
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-            alignSelf: "flex-start",
+            display: "block",
+            padding: "6px",
+            background: "#eee",
+            borderRadius: "4px",
+            marginBottom: "8px",
           }}
         >
-          {isSubmitting ? "Saving..." : "Save Question"}
-        </button>
-      </form>
+          question_text,category,difficulty,option1,option2,option3,option4,correct_option
+        </code>
+
+        {importError && (
+          <div
+            style={{
+              backgroundColor: "#ffe5e5",
+              padding: "10px",
+              borderRadius: "6px",
+              color: "#b00020",
+              marginBottom: "12px",
+            }}
+          >
+            {importError}
+          </div>
+        )}
+
+        {importSuccess && (
+          <div
+            style={{
+              backgroundColor: "#e6ffed",
+              padding: "10px",
+              borderRadius: "6px",
+              color: "#137333",
+              marginBottom: "12px",
+            }}
+          >
+            {importSuccess}
+            {importedCount !== null && (
+              <div style={{ marginTop: "6px" }}>
+                Parsed rows: <strong>{importedCount}</strong>
+              </div>
+            )}
+          </div>
+        )}
+
+        <input
+          type="file"
+          accept=".csv,text/csv"
+          onChange={handleCsvFileChange}
+          disabled={isImporting}
+        />
+
+        {/* CONFIRMATION SCREEN */}
+        {pendingImportQuestions && pendingImportQuestions.length > 0 && (
+          <div
+            style={{
+              marginTop: "16px",
+              padding: "12px",
+              borderRadius: "8px",
+              border: "1px solid #ccc",
+              background: "#fff",
+            }}
+          >
+            <h3 style={{ fontSize: "1rem", fontWeight: 600, marginBottom: 8 }}>
+              Review Imported Questions
+            </h3>
+            <p style={{ fontSize: "0.9rem", color: "#555", marginBottom: 12 }}>
+              Please confirm the questions and answers below. When you click{" "}
+              <strong>Submit all questions</strong>, they will be sent to the
+              server.
+            </p>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {pendingImportQuestions.map((q, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    border: "1px solid #eee",
+                    borderRadius: "6px",
+                    padding: "8px 10px",
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: "0.85rem",
+                      color: "#555",
+                      marginBottom: 4,
+                    }}
+                  >
+                    Question {idx + 1} • {q.category} •{" "}
+                    {q.difficulty.charAt(0).toUpperCase() +
+                      q.difficulty.slice(1)}
+                  </div>
+                  <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                    {q.question_text}
+                  </div>
+                  <ul
+                    style={{
+                      listStyle: "disc",
+                      paddingLeft: "20px",
+                      margin: 0,
+                      fontSize: "0.9rem",
+                    }}
+                  >
+                    {q.options.map((opt, i) => (
+                      <li key={i}>
+                        {opt.text}{" "}
+                        {opt.is_correct && (
+                          <span
+                            style={{
+                              fontSize: "0.8rem",
+                              fontWeight: 600,
+                              marginLeft: 6,
+                              padding: "2px 6px",
+                              borderRadius: "999px",
+                              background: "#e0f2fe",
+                              color: "#1d4ed8",
+                            }}
+                          >
+                            Correct
+                          </span>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                gap: 8,
+                marginTop: 12,
+                justifyContent: "flex-end",
+              }}
+            >
+              <button
+                type="button"
+                onClick={handleCancelImport}
+                style={{
+                  padding: "8px 12px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                  background: "#f3f4f6",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmImport}
+                disabled={isImporting}
+                style={{
+                  padding: "8px 14px",
+                  borderRadius: "6px",
+                  border: "none",
+                  background: "#16a34a",
+                  color: "#fff",
+                  fontWeight: 600,
+                  cursor: isImporting ? "not-allowed" : "pointer",
+                }}
+              >
+                {isImporting ? "Submitting..." : "Submit all questions"}
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
     </div>
   )
 }
