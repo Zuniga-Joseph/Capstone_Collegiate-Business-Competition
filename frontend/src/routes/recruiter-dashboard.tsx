@@ -433,7 +433,7 @@ const styles = {
     marginBottom: "24px",
   },
   chartFullWidthInner: {
-    height: "320px",
+    height: "600px",
   },
 };
 
