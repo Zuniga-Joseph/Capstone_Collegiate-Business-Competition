@@ -16,6 +16,7 @@ import { Route as PostGameLeaderboardRouteImport } from './routes/post-game-lead
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as HomepageRouteImport } from './routes/homepage'
 import { Route as LayoutRouteImport } from './routes/_layout'
+import { Route as RecordIndexRouteImport } from './routes/record/index'
 import { Route as LayoutIndexRouteImport } from './routes/_layout/index'
 import { Route as LayoutSettingsRouteImport } from './routes/_layout/settings'
 import { Route as LayoutItemsRouteImport } from './routes/_layout/items'
@@ -55,6 +56,11 @@ const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RecordIndexRoute = RecordIndexRouteImport.update({
+  id: '/record/',
+  path: '/record/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutIndexRoute = LayoutIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
+  '/record': typeof RecordIndexRoute
 }
 export interface FileRoutesByTo {
   '/homepage': typeof HomepageRoute
@@ -99,6 +106,7 @@ export interface FileRoutesByTo {
   '/items': typeof LayoutItemsRoute
   '/settings': typeof LayoutSettingsRoute
   '/': typeof LayoutIndexRoute
+  '/record': typeof RecordIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -113,6 +121,7 @@ export interface FileRoutesById {
   '/_layout/items': typeof LayoutItemsRoute
   '/_layout/settings': typeof LayoutSettingsRoute
   '/_layout/': typeof LayoutIndexRoute
+  '/record/': typeof RecordIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -127,6 +136,7 @@ export interface FileRouteTypes {
     | '/items'
     | '/settings'
     | '/'
+    | '/record'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/homepage'
@@ -139,6 +149,7 @@ export interface FileRouteTypes {
     | '/items'
     | '/settings'
     | '/'
+    | '/record'
   id:
     | '__root__'
     | '/_layout'
@@ -152,6 +163,7 @@ export interface FileRouteTypes {
     | '/_layout/items'
     | '/_layout/settings'
     | '/_layout/'
+    | '/record/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -162,6 +174,7 @@ export interface RootRouteChildren {
   RecoverPasswordRoute: typeof RecoverPasswordRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  RecordIndexRoute: typeof RecordIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -213,6 +226,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: ''
       preLoaderRoute: typeof LayoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/record/': {
+      id: '/record/'
+      path: '/record'
+      fullPath: '/record'
+      preLoaderRoute: typeof RecordIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_layout/': {
@@ -271,6 +291,7 @@ const rootRouteChildren: RootRouteChildren = {
   RecoverPasswordRoute: RecoverPasswordRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  RecordIndexRoute: RecordIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
