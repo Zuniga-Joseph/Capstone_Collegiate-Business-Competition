@@ -1,6 +1,9 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { isLoggedIn } from "@/hooks/useAuth";
+
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 import {
   Chart as ChartJS,
@@ -43,16 +46,16 @@ export const Route = createFileRoute("/recruiter-dashboard")({
 });
 
 interface CoreComponents {
-  emotionalIntelligence: number;      // 0–5
-  socialIntelligence: number;         // 0–5
-  coachabilityGrowth: number;         // 0–5
+  emotionalIntelligence: number; // 0–5
+  socialIntelligence: number; // 0–5
+  coachabilityGrowth: number; // 0–5
 }
 
 interface Student {
   id: number;
   name: string;
   rank: number;
-  score: number;                      // 0–100, derived from coreComponents
+  score: number; // 0–100, derived from coreComponents
   university: string;
   major: string;
   email: string;
@@ -524,6 +527,7 @@ function StudentDetailPage({
   onBack: () => void;
 }) {
   const [imageUrl, setImageUrl] = useState("");
+  const printRef = useRef<HTMLDivElement | null>(null);
 
   // --- Data for this student ---
   const highLevelRadarData = createHighLevelRadarData(student);
@@ -583,14 +587,69 @@ function StudentDetailPage({
     },
   } as const;
 
+  const handleDownloadPDF = async () => {
+    if (!printRef.current) return;
+
+    const element = printRef.current;
+
+    const canvas = await html2canvas(element, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: "#ffffff",
+    });
+
+    const imgData = canvas.toDataURL("image/png");
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = pdfWidth;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 0;
+
+    pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+    heightLeft -= pdfHeight;
+
+    // If content overflows, add extra pages
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight;
+      pdf.addPage();
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pdfHeight;
+    }
+
+    pdf.save(`${student.name.replace(/\s+/g, "_")}_report.pdf`);
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.content}>
-        <button style={styles.backButton} onClick={onBack}>
-          ← Back to Leaderboard
-        </button>
+        <div
+          style={{
+            display: "flex",
+            gap: "12px",
+            marginBottom: "20px",
+          }}
+        >
+          <button style={styles.backButton} onClick={onBack}>
+            ← Back to Leaderboard
+          </button>
+          <button
+            style={{
+              ...styles.backButton,
+              background: "#667eea",
+              color: "white",
+            }}
+            onClick={handleDownloadPDF}
+          >
+            ⬇︎ Download PDF
+          </button>
+        </div>
 
-        <div style={styles.detailCard}>
+        <div style={styles.detailCard} ref={printRef}>
           <div style={styles.detailHeader}>
             <div>
               <h1 style={styles.studentName}>{student.name}</h1>
