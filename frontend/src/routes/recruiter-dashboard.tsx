@@ -456,10 +456,15 @@ function createHighLevelRadarData(student: Student) {
 
   return {
     labels,
-    datasets: [
+     datasets: [
       {
         label: "Core Components (0–5)",
         data,
+        backgroundColor: "rgba(102, 126, 234, 0.2)",   // fill
+        borderColor: "rgba(102, 126, 234, 1)",          // outline
+        pointBackgroundColor: "rgba(102, 126, 234, 1)",
+        pointBorderColor: "#ffffff",
+        pointHoverRadius: 5,
       },
     ],
   };
@@ -476,13 +481,17 @@ function createMockSentimentTimelineData() {
   return {
     labels,
     datasets: [
-      {
-        label: "Sentiment (−1 to 1)",
-        data,
-        tension: 0.3,
-      },
-    ],
-  };
+    {
+      label: "Sentiment (−1 to 1)",
+      data,
+      tension: 0.3,
+      borderColor: "rgba(102, 126, 234, 1)",
+      backgroundColor: "rgba(102, 126, 234, 0.15)",
+      pointBackgroundColor: "rgba(102, 126, 234, 1)",
+      pointRadius: 4,
+    },
+  ],
+};
 }
 
 // --- Helper: speaking time (mock) ---
@@ -494,14 +503,17 @@ function createMockSpeakingTimeData(student: Student) {
   labels[0] = student.name.split(" ")[0] || "Candidate A";
 
   return {
-    labels,
-    datasets: [
-      {
-        label: "Speaking Time (seconds)",
-        data: times,
-      },
-    ],
-  };
+  labels,
+  datasets: [
+    {
+      label: "Speaking Time (seconds)",
+      data: times,
+      backgroundColor: "rgba(118, 75, 162, 0.6)",
+      borderColor: "rgba(118, 75, 162, 1)",
+      borderWidth: 1,
+    },
+  ],
+};
 }
 
 // --- Helper: emotion distribution (mock) ---
@@ -510,13 +522,22 @@ function createMockEmotionData() {
   const data = labels.map(() => Math.floor(5 + Math.random() * 20));
 
   return {
-    labels,
-    datasets: [
-      {
-        data,
-      },
-    ],
-  };
+  labels,
+  datasets: [
+    {
+      data,
+      backgroundColor: [
+        "rgba(102, 126, 234, 0.7)",  // Joy
+        "rgba(118, 75, 162, 0.7)",   // Trust
+        "rgba(156, 163, 175, 0.7)",  // Neutral
+        "rgba(239, 68, 68, 0.7)",    // Frustration
+        "rgba(245, 158, 11, 0.7)",   // Uncertainty
+      ],
+      borderColor: "#ffffff",
+      borderWidth: 1,
+    },
+  ],
+};
 }
 
 function StudentDetailPage({
