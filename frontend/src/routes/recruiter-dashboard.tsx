@@ -46,7 +46,7 @@ export const Route = createFileRoute("/recruiter-dashboard")({
 });
 
 interface CoreComponents {
-  emotionalIntelligence: number; // 0–5
+  mentalResilience: number; // 0–5
   socialIntelligence: number; // 0–5
   coachabilityGrowth: number; // 0–5
 }
@@ -127,12 +127,12 @@ const fakeStudents: Student[] = Array.from({ length: 47 }, (_, i) => {
   const name = `${firstName} ${lastName}`;
 
   // Core components (0–5)
-  const emotionalIntelligence = randomComponentScore();
+  const mentalResilience = randomComponentScore();
   const socialIntelligence = randomComponentScore();
   const coachabilityGrowth = randomComponentScore();
 
   const coreAvg =
-    (emotionalIntelligence + socialIntelligence + coachabilityGrowth) / 3;
+    (mentalResilience + socialIntelligence + coachabilityGrowth) / 3;
 
   // Overall score 0–100 derived from core components
   const score = Math.round((coreAvg / 5) * 100);
@@ -157,7 +157,7 @@ const fakeStudents: Student[] = Array.from({ length: 47 }, (_, i) => {
       "Startup Founder",
     ][Math.floor(Math.random() * 4)],
     coreComponents: {
-      emotionalIntelligence,
+      mentalResilience,
       socialIntelligence,
       coachabilityGrowth,
     },
@@ -440,16 +440,16 @@ const styles = {
 // --- Helper: high-level radar data (3 core components) ---
 function createHighLevelRadarData(student: Student) {
   const labels = [
-    "Emotional Intelligence",
+    "Mental Resilience",
     "Social Intelligence",
     "Coachability & Growth",
   ];
 
-  const { emotionalIntelligence, socialIntelligence, coachabilityGrowth } =
+  const { mentalResilience, socialIntelligence, coachabilityGrowth } =
     student.coreComponents;
 
   const data = [
-    emotionalIntelligence,
+    mentalResilience,
     socialIntelligence,
     coachabilityGrowth,
   ];
