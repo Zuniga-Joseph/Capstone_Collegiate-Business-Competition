@@ -430,7 +430,7 @@ function QuestionEntryPage() {
           {/* Options */}
           <div style={{ marginTop: "8px" }}>
             <label style={{ fontWeight: 600 }}>
-              Answer Options (4 required)
+              Answer Options (4 required). Select correct answer.
             </label>
 
             {options.map((opt, index) => (
