@@ -52,3 +52,52 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -
     session.commit()
     session.refresh(db_item)
     return db_item
+
+# ============================================
+# Lexicon Suggestion CRUD
+# ============================================
+
+from datetime import datetime
+from app.models import LexiconSuggestion, LexiconCategory, LexiconDimension
+from sqlmodel import Session, select
+
+def upsert_lexicon_suggestion(
+    *,
+    session: Session,
+    word: str,
+    category: LexiconCategory,
+    dimension: LexiconDimension | None,
+    tfidf_score: float,
+    frequency: int = 1,
+) -> LexiconSuggestion:
+
+    statement = (
+        select(LexiconSuggestion)
+        .where(LexiconSuggestion.word == word)
+        .where(LexiconSuggestion.category == category)
+        .where(LexiconSuggestion.dimension == dimension)
+    )
+
+    existing = session.exec(statement).first()
+
+    if existing:
+        existing.tfidf_score = max(existing.tfidf_score or 0.0, tfidf_score)
+        existing.frequency = (existing.frequency or 0) + frequency
+        session.add(existing)
+        session.commit()
+        session.refresh(existing)
+        return existing
+
+    suggestion = LexiconSuggestion(
+        word=word,
+        category=category,
+        dimension=dimension,
+        tfidf_score=tfidf_score,
+        frequency=frequency,
+        approved=False,
+        rejected=False,
+    )
+    session.add(suggestion)
+    session.commit()
+    session.refresh(suggestion)
+    return suggestion
