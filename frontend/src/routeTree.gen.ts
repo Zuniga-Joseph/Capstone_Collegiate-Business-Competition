@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as RecruiterDashboardRouteImport } from './routes/recruiter-dashboard'
 import { Route as RecoverPasswordRouteImport } from './routes/recover-password'
 import { Route as PostGameLeaderboardRouteImport } from './routes/post-game-leaderboard'
 import { Route as LoginRouteImport } from './routes/login'
@@ -30,6 +31,11 @@ const SignupRoute = SignupRouteImport.update({
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RecruiterDashboardRoute = RecruiterDashboardRouteImport.update({
+  id: '/recruiter-dashboard',
+  path: '/recruiter-dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RecoverPasswordRoute = RecoverPasswordRouteImport.update({
@@ -87,6 +93,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
+  '/recruiter-dashboard': typeof RecruiterDashboardRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
@@ -100,6 +107,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
+  '/recruiter-dashboard': typeof RecruiterDashboardRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/admin': typeof LayoutAdminRoute
@@ -115,6 +123,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/post-game-leaderboard': typeof PostGameLeaderboardRoute
   '/recover-password': typeof RecoverPasswordRoute
+  '/recruiter-dashboard': typeof RecruiterDashboardRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_layout/admin': typeof LayoutAdminRoute
@@ -130,6 +139,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/post-game-leaderboard'
     | '/recover-password'
+    | '/recruiter-dashboard'
     | '/reset-password'
     | '/signup'
     | '/admin'
@@ -143,6 +153,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/post-game-leaderboard'
     | '/recover-password'
+    | '/recruiter-dashboard'
     | '/reset-password'
     | '/signup'
     | '/admin'
@@ -157,6 +168,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/post-game-leaderboard'
     | '/recover-password'
+    | '/recruiter-dashboard'
     | '/reset-password'
     | '/signup'
     | '/_layout/admin'
@@ -172,6 +184,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   PostGameLeaderboardRoute: typeof PostGameLeaderboardRoute
   RecoverPasswordRoute: typeof RecoverPasswordRoute
+  RecruiterDashboardRoute: typeof RecruiterDashboardRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   RecordIndexRoute: typeof RecordIndexRoute
@@ -191,6 +204,13 @@ declare module '@tanstack/react-router' {
       path: '/reset-password'
       fullPath: '/reset-password'
       preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/recruiter-dashboard': {
+      id: '/recruiter-dashboard'
+      path: '/recruiter-dashboard'
+      fullPath: '/recruiter-dashboard'
+      preLoaderRoute: typeof RecruiterDashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/recover-password': {
@@ -289,6 +309,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   PostGameLeaderboardRoute: PostGameLeaderboardRoute,
   RecoverPasswordRoute: RecoverPasswordRoute,
+  RecruiterDashboardRoute: RecruiterDashboardRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   RecordIndexRoute: RecordIndexRoute,
