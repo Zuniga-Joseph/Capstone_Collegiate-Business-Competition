@@ -46,10 +46,6 @@ function SignUp() {
       full_name: "",
       password: "",
       confirm_password: "",
-      school: "",
-      major: "",
-      gpa: 0,
-
     },
   })
 
@@ -135,51 +131,6 @@ function SignUp() {
             placeholder="Confirm Password"
             errors={errors}
           />
-          {/* School */}
-          <Field invalid={!!errors.school} errorText={errors.school?.message}>
-            <InputGroup w="100%">
-              <Input
-                {...register("school", {
-                  required: "School is required",
-                  minLength: { value: 2, message: "School must be at least 2 characters" },
-                })}
-                placeholder="School"
-                type="text"
-              />
-            </InputGroup>
-          </Field>
-
-          {/* Major */}
-          <Field invalid={!!errors.major} errorText={errors.major?.message}>
-            <InputGroup w="100%">
-              <Input
-                {...register("major", {
-                  required: "Major is required",
-                  minLength: { value: 2, message: "Major must be at least 2 characters" },
-                })}
-                placeholder="Major"
-                type="text"
-              />
-            </InputGroup>
-          </Field>
-
-          {/* GPA */}
-          <Field invalid={!!errors.gpa} errorText={errors.gpa?.message}>
-            <InputGroup w="100%">
-             <Input
-              {...register("gpa", {
-                required: "GPA is required",
-                valueAsNumber: true,
-                min: { value: 0, message: "GPA cannot be negative" },
-                max: { value: 4, message: "GPA cannot be greater than 4.0" },
-              })}
-              placeholder="GPA (e.g., 3.75)"
-              type="number"
-              step="0.01"
-              />
-            </InputGroup>
-          </Field>
-
           <Button variant="solid" type="submit" loading={isSubmitting}>
             Sign Up
           </Button>
