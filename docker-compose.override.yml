@@ -102,6 +102,31 @@ services:
         - VITE_API_URL=http://localhost:8000
         - NODE_ENV=development
 
+  game-server:
+    build:
+      context: ./game-server
+    restart: "no"
+    ports:
+      - "3001:3001"
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      - BACKEND_URL=http://backend:8000
+      - API_V1_STR=/api/v1
+      - SECRET_KEY=${SECRET_KEY?Variable not set}
+      - PORT=3001
+    develop:
+      watch:
+        - path: ./game-server/src
+          action: sync
+          target: /app/src
+        - path: ./game-server/package.json
+          action: rebuild
+    volumes:
+      - ./game-server:/app
+      - /app/node_modules
+
   playwright:
     build:
       context: ./frontend

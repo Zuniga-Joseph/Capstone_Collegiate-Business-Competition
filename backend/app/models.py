@@ -221,3 +221,90 @@ class EventAnalytics(SQLModel):
     total_participants: int
     participants_by_school: dict[str, int]
     registration_status: str
+
+
+# Game Session status enum
+class GameSessionStatus(str, Enum):
+    waiting = "waiting"
+    in_progress = "in_progress"
+    completed = "completed"
+
+
+# Shared properties for GameSession
+class GameSessionBase(SQLModel):
+    event_id: uuid.UUID | None = Field(default=None, foreign_key="event.id")
+    join_code: str | None = Field(default=None, max_length=20)
+    status: GameSessionStatus = Field(default=GameSessionStatus.waiting)
+    question_count: int = Field(default=0)
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+
+
+# Properties to receive on game session creation
+class GameSessionCreate(SQLModel):
+    event_id: uuid.UUID | None = None
+    join_code: str | None = None
+
+
+# Properties to receive on game session update
+class GameSessionUpdate(SQLModel):
+    status: GameSessionStatus | None = None
+    question_count: int | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+
+
+# Database model for GameSession
+class GameSession(GameSessionBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    participants: list["GameParticipant"] = Relationship(
+        back_populates="session", cascade_delete=True
+    )
+
+
+# Properties to return via API
+class GameSessionPublic(GameSessionBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+# List of game sessions
+class GameSessionsPublic(SQLModel):
+    data: list[GameSessionPublic]
+    count: int
+
+
+# Link table for game participants with scores
+class GameParticipant(SQLModel, table=True):
+    session_id: uuid.UUID = Field(
+        foreign_key="gamesession.id", primary_key=True, ondelete="CASCADE"
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", primary_key=True, ondelete="CASCADE"
+    )
+    score: int = Field(default=0)
+    rank: int | None = None
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    session: GameSession = Relationship(back_populates="participants")
+
+
+# Game session with participant details
+class GameSessionWithParticipants(GameSessionPublic):
+    participants: list[UserPublic]
+
+
+# Game leaderboard entry
+class GameLeaderboardEntry(SQLModel):
+    user_id: uuid.UUID
+    full_name: str | None
+    university: str | None
+    score: int
+    rank: int
+
+
+# Game session leaderboard
+class GameSessionLeaderboard(SQLModel):
+    session_id: uuid.UUID
+    event_id: uuid.UUID | None
+    entries: list[GameLeaderboardEntry]
