@@ -1,15 +1,47 @@
 import uuid
+from datetime import datetime
 from typing import Any
 
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import (
+    Item,
+    ItemCreate,
+    User,
+    UserCreate,
+    UserUpdate,
+    UserRole,
+    LexiconSuggestion,
+    LexiconCategory,
+    LexiconDimension,
+)
 
 
-def create_user(*, session: Session, user_create: UserCreate) -> User:
+# ============================
+# User CRUD
+# ============================
+
+def create_user(
+    *,
+    session: Session,
+    user_create: UserCreate,
+    role: UserRole | None = None,
+) -> User:
+    """
+    Create a user with hashed password.
+    If `role` is provided, it overrides user_create.role.
+    Otherwise, UserBase/UserCreate default (CANDIDATE) is used.
+    """
+    update_data: dict[str, Any] = {
+        "hashed_password": get_password_hash(user_create.password),
+    }
+    if role is not None:
+        update_data["role"] = role
+
     db_obj = User.model_validate(
-        user_create, update={"hashed_password": get_password_hash(user_create.password)}
+        user_create,
+        update=update_data,
     )
     session.add(db_obj)
     session.commit()
@@ -17,13 +49,29 @@ def create_user(*, session: Session, user_create: UserCreate) -> User:
     return db_obj
 
 
+def create_recruiter_user(
+    *,
+    session: Session,
+    user_create: UserCreate,
+) -> User:
+    """
+    Convenience helper: always create a recruiter.
+    Useful for /register-recruiter endpoint.
+    """
+    return create_user(session=session, user_create=user_create, role=UserRole.RECRUITER)
+
+
 def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     user_data = user_in.model_dump(exclude_unset=True)
-    extra_data = {}
+    extra_data: dict[str, Any] = {}
+
     if "password" in user_data:
         password = user_data["password"]
         hashed_password = get_password_hash(password)
         extra_data["hashed_password"] = hashed_password
+        # Remove plain password from data; it's not a column on User
+        user_data.pop("password", None)
+
     db_user.sqlmodel_update(user_data, update=extra_data)
     session.add(db_user)
     session.commit()
@@ -53,13 +101,10 @@ def create_item(*, session: Session, item_in: ItemCreate, owner_id: uuid.UUID) -
     session.refresh(db_item)
     return db_item
 
+
 # ============================================
 # Lexicon Suggestion CRUD
 # ============================================
-
-from datetime import datetime
-from app.models import LexiconSuggestion, LexiconCategory, LexiconDimension
-from sqlmodel import Session, select
 
 def upsert_lexicon_suggestion(
     *,

@@ -20,6 +20,7 @@ from app.models import (
 from app.crud import upsert_lexicon_suggestion
 from app.NLTK.sentiment_individual_analysis import measure_constructs_from_text  # adjust this import path
 
+from app.models import TFIDFSuggestionRequest
 
 router = APIRouter(prefix="/lexicon", tags=["lexicon"])
 

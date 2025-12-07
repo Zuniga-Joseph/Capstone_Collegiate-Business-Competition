@@ -9,6 +9,11 @@ from sqlalchemy import Enum as SAEnum
 
 from typing import Any, List
 
+class UserRole(str, enum.Enum):
+    CANDIDATE = "candidate"
+    RECRUITER = "recruiter"
+    ADMIN = "admin"
+
 
 # Shared properties
 class UserBase(SQLModel):
@@ -16,6 +21,15 @@ class UserBase(SQLModel):
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
+
+    role: UserRole = Field(
+        default=UserRole.CANDIDATE,
+        sa_column=Column(
+            SAEnum(UserRole, name="user_role_enum"),
+            nullable=False,
+            index=True,
+        ),
+    )
 
 
 # Properties to receive via API on creation
@@ -112,6 +126,7 @@ class Token(SQLModel):
 # Contents of JWT token
 class TokenPayload(SQLModel):
     sub: str | None = None
+    role: UserRole | None = None
 
 
 class NewPassword(SQLModel):
@@ -153,8 +168,8 @@ class LexiconSuggestionBase(SQLModel):
         sa_column=Column(
             SAEnum(LexiconCategory, name="lexicon_category_enum"),
             nullable=False,
+            index=True,
         ),
-        index=True,
         description="High-level construct: social_intelligence / mental_resilience / coachability_growth",
     )
 
@@ -163,8 +178,8 @@ class LexiconSuggestionBase(SQLModel):
         sa_column=Column(
             SAEnum(LexiconDimension, name="lexicon_dimension_enum"),
             nullable=True,
+            index=True,
         ),
-        index=True,
         description="Sub-dimension inside the construct (empathy, polite, resilience, etc.)",
     )
 

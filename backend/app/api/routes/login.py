@@ -21,7 +21,7 @@ from app.utils import (
 router = APIRouter(tags=["login"])
 
 
-@router.post("/login/access-token")
+@router.post("/login/access-token", response_model=Token)
 def login_access_token(
     session: SessionDep, form_data: Annotated[OAuth2PasswordRequestForm, Depends()]
 ) -> Token:
@@ -35,12 +35,16 @@ def login_access_token(
         raise HTTPException(status_code=400, detail="Incorrect email or password")
     elif not user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    return Token(
-        access_token=security.create_access_token(
-            user.id, expires_delta=access_token_expires
-        )
+
+    access_token = security.create_access_token(
+        subject=user.id,
+        role=user.role,                      # <-- pass recruiter/candidate/admin
+        expires_delta=access_token_expires,
     )
+
+    return Token(access_token=access_token)
 
 
 @router.post("/login/test-token", response_model=UserPublic)

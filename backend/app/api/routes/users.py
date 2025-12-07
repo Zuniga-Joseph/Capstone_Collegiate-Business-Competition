@@ -23,6 +23,7 @@ from app.models import (
     UsersPublic,
     UserUpdate,
     UserUpdateMe,
+    UserRole,
 )
 from app.utils import generate_new_account_email, send_email
 
@@ -143,6 +144,7 @@ def delete_user_me(session: SessionDep, current_user: CurrentUser) -> Any:
 def register_user(session: SessionDep, user_in: UserRegister) -> Any:
     """
     Create new user without the need to be logged in.
+    (Public candidate signup)
     """
     user = crud.get_user_by_email(session=session, email=user_in.email)
     if user:
@@ -150,9 +152,43 @@ def register_user(session: SessionDep, user_in: UserRegister) -> Any:
             status_code=400,
             detail="The user with this email already exists in the system",
         )
-    user_create = UserCreate.model_validate(user_in)
-    user = crud.create_user(session=session, user_create=user_create)
+
+    # Force candidate role for public signup
+    user_create = UserCreate.model_validate(
+        user_in,
+        update={"role": UserRole.CANDIDATE},
+    )
+    user = crud.create_user(
+        session=session,
+        user_create=user_create,
+        role=UserRole.CANDIDATE,
+    )
     return user
+
+@router.post("/signup-recruiter", response_model=UserPublic)
+def register_recruiter(session: SessionDep, user_in: UserRegister) -> Any:
+    """
+    Create a new recruiter user.
+    For now this is public; you can later protect it if needed.
+    """
+    user = crud.get_user_by_email(session=session, email=user_in.email)
+    if user:
+        raise HTTPException(
+            status_code=400,
+            detail="The user with this email already exists in the system",
+        )
+
+    user_create = UserCreate.model_validate(
+        user_in,
+        update={"role": UserRole.RECRUITER},
+    )
+    user = crud.create_user(
+        session=session,
+        user_create=user_create,
+        role=UserRole.RECRUITER,
+    )
+    return user
+
 
 
 @router.get("/{user_id}", response_model=UserPublic)

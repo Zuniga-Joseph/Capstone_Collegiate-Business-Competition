@@ -547,7 +547,6 @@ function StudentDetailPage({
   student: Student;
   onBack: () => void;
 }) {
-  const [imageUrl, setImageUrl] = useState("");
   const printRef = useRef<HTMLDivElement | null>(null);
 
   // --- Data for this student ---
