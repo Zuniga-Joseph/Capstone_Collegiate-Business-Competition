@@ -118,7 +118,7 @@ services:
       - PORT=3001
     develop:
       watch:
-        - path: ./game-server/src
+        - path: ./game-server
           action: sync
           target: /app/src
         - path: ./game-server/package.json
