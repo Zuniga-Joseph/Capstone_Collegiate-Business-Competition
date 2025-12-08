@@ -1,5 +1,6 @@
 import { Box, Container, Text } from "@chakra-ui/react"
 import { createFileRoute } from "@tanstack/react-router"
+import { GlobalRecordButton } from "../../components/Common/GlobalRecordButton";
 
 import useAuth from "@/hooks/useAuth"
 
@@ -18,6 +19,9 @@ function Dashboard() {
         </Text>
         <Text>Welcome back, nice to see you again!</Text>
       </Box>
+
+      {/* 🔴 Floating record button, fixed in bottom-right */}
+      <GlobalRecordButton />
     </Container>
   )
 }
