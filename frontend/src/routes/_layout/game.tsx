@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { Box, Container, Heading, VStack, Text } from "@chakra-ui/react"
 import { useEffect, useState } from "react"
 import { GameClient } from "../../components/Game/GameClient"
+import { GlobalRecordButton } from "../../components/Common/GlobalRecordButton"
 
 export const Route = createFileRoute("/_layout/game")({
   component: GamePage,
@@ -70,6 +71,9 @@ function GamePage() {
 
   return (
     <Box w="100%" h="calc(100vh - 64px)" overflow="hidden">
+      <Box position="absolute" top={4} right={4} zIndex={10}>
+        <GlobalRecordButton />
+      </Box>
       <GameClient
         token={token}
         serverUrl={import.meta.env.VITE_GAME_SERVER_URL || "http://localhost:3001"}

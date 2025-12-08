@@ -76,7 +76,7 @@ const AddItem = () => {
         }
         formData.append("questions_file", questionsFile)
         
-        return ItemsService.createItem({ requestBody: formData })
+        return ItemsService.createItem({ requestBody: formData as any})
       } else {
         // Otherwise use regular JSON
         return ItemsService.createItem({ requestBody: data })
