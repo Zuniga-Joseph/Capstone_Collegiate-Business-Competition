@@ -6,6 +6,10 @@ from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
 
+# =============================================================================
+# Users
+# =============================================================================
+
 # Shared properties
 class UserBase(SQLModel):
     email: EmailStr = Field(unique=True, index=True, max_length=255)
@@ -63,6 +67,10 @@ class UsersPublic(SQLModel):
     data: list[UserPublic]
     count: int
 
+# =============================================================================
+# Items (remove later)
+# =============================================================================
+
 
 # Shared properties
 class ItemBase(SQLModel):
@@ -100,9 +108,19 @@ class ItemsPublic(SQLModel):
     count: int
 
 
+# =============================================================================
+# Message
+# =============================================================================
+
+
 # Generic message
 class Message(SQLModel):
     message: str
+
+
+# =============================================================================
+# JWT Tokens
+# =============================================================================
 
 
 # JSON payload containing access token
@@ -116,9 +134,19 @@ class TokenPayload(SQLModel):
     sub: str | None = None
 
 
+# =============================================================================
+# Password
+# =============================================================================
+
+
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+
+# =============================================================================
+# Event
+# =============================================================================
 
 
 # Event status enum
@@ -192,6 +220,10 @@ class EventsPublic(SQLModel):
 class EventWithParticipants(EventPublic):
     participants: list[UserPublic]
 
+# =============================================================================
+# EventParticipant (link between User & Event)
+# =============================================================================
+
 
 # Link table for many-to-many relationship between Event and User
 class EventParticipant(SQLModel, table=True):
@@ -221,6 +253,11 @@ class EventAnalytics(SQLModel):
     total_participants: int
     participants_by_school: dict[str, int]
     registration_status: str
+
+
+# =============================================================================
+# Game Session
+# =============================================================================
 
 
 # Game Session status enum
