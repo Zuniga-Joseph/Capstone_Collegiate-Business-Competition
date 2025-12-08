@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import React, { useState, useRef } from "react";
+import * as React from "react";
+
 
 export const Route = createFileRoute("/record/")({
   component: RecordPage,
