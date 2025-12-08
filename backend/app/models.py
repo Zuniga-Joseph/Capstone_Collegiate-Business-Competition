@@ -65,6 +65,12 @@ class User(UserBase, table=True):
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
 
+    #recruiter-owned question sets
+    question_sets: list["QuestionSet"] = Relationship(
+        back_populates="owner",
+        cascade_delete=True,
+    )
+
 
 # Properties to return via API, id is always required
 class UserPublic(UserBase):
@@ -279,3 +285,157 @@ class BatchAnalysisResponse(SQLModel):
     players: list[PlayerAnalysis]
     suggestions: list[LexiconSuggestion]
 
+
+# =========================
+# Question / QuestionSet models
+# =========================
+
+class DifficultyEnum(str, enum.Enum):
+    EASY = "easy"
+    MEDIUM = "medium"
+    HARD = "hard"
+
+
+class QuestionSetBase(SQLModel):
+    name: str = Field(max_length=255)
+    description: str | None = Field(default=None, max_length=1024)
+    # Optional code for games to look up the set, e.g. "NCBC25-R1"
+    event_code: str | None = Field(default=None, max_length=64)
+
+
+class QuestionSet(QuestionSetBase, table=True):
+    __tablename__ = "question_sets"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Tie the set to a recruiter user
+    owner_id: uuid.UUID = Field(
+        foreign_key="user.id",
+        nullable=False,
+        index=True,
+    )
+
+    owner: "User" = Relationship(back_populates="question_sets")
+    questions: list["Question"] = Relationship(back_populates="question")
+
+
+# Add backref on User (inside User class in models.py)
+# class User(UserBase, table=True):
+#     ...
+#     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+#     question_sets: list["QuestionSet"] = Relationship(
+#         back_populates="owner",
+#         cascade_delete=True,
+#     )
+
+
+class QuestionBase(SQLModel):
+    question_text: str = Field(max_length=1024)
+    category: str = Field(max_length=255)
+    difficulty: DifficultyEnum = Field(
+        sa_column=Column(
+            SAEnum(DifficultyEnum, name="difficulty_enum"),
+            nullable=False,
+            index=True,
+        )
+    )
+    explanation: str | None = Field(default=None, max_length=2048)
+
+
+class Question(QuestionBase, table=True):
+    __tablename__ = "questions"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    question_set_id: uuid.UUID = Field(
+        foreign_key="question_sets.id",
+        nullable=False,
+        index=True,
+    )
+
+    question_set: "QuestionSet" = Relationship(back_populates="questions")
+    options: list["QuestionOption"] = Relationship(
+        back_populates="question",
+        sa_relationship_kwargs={"cascade": "all, delete-orphan"},
+    )
+
+
+class QuestionOptionBase(SQLModel):
+    text: str = Field(max_length=512)
+    is_correct: bool = False
+
+
+class QuestionOption(QuestionOptionBase, table=True):
+    __tablename__ = "question_options"
+
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    question_id: uuid.UUID = Field(
+        foreign_key="questions.id",
+        nullable=False,
+        index=True,
+    )
+
+    question: "Question" = Relationship(back_populates="options")
+
+
+# =========================
+# Question / QuestionSet API schemas
+# =========================
+
+from uuid import UUID
+
+class QuestionOptionCreate(SQLModel):
+    text: str
+    is_correct: bool
+
+
+class QuestionOptionRead(SQLModel):
+    id: UUID
+    text: str
+    is_correct: bool
+
+
+class QuestionCreate(SQLModel):
+    question_set_id: UUID
+    question_text: str
+    category: str
+    difficulty: DifficultyEnum
+    options: list[QuestionOptionCreate]
+    explanation: str | None = None
+
+
+class QuestionRead(SQLModel):
+    id: UUID
+    question_set_id: UUID
+    question_text: str
+    category: str
+    difficulty: DifficultyEnum
+    options: list[QuestionOptionRead]
+    explanation: str | None = None
+
+
+class BulkQuestionsCreate(SQLModel):
+    question_set_id: UUID
+    questions: list[QuestionCreate]
+
+
+class BulkQuestionsRead(SQLModel):
+    questions: list[QuestionRead]
+    created_count: int
+
+
+class QuestionSetCreate(SQLModel):
+    name: str
+    description: str | None = None
+    event_code: str | None = None
+
+
+class QuestionSetRead(SQLModel):
+    id: UUID
+    name: str
+    description: str | None = None
+    event_code: str | None = None
+
+
+class QuestionSetReadWithQuestions(QuestionSetRead):
+    questions: list[QuestionRead]
