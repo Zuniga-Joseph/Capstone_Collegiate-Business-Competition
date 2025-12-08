@@ -1,0 +1,23 @@
+{
+  "name": "quiz-game-server",
+  "version": "1.0.0",
+  "description": "Multiplayer quiz game server with PostgreSQL",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "express": "^5.1.0",
+    "socket.io": "^4.8.1",
+    "pg": "^8.11.3",
+    "jsonwebtoken": "^9.0.2",
+    "dotenv": "^16.4.5",
+    "uuid": "^11.0.3"
+  }
+}

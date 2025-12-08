@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pixi.JS Prototype</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+    </style>
+    <script type="importmap">
+        {
+            "imports": {
+                "pixi.js": "/node_modules/pixi.js/dist/pixi.mjs",
+                "socket.io-client": "/node_modules/socket.io-client/dist/socket.io.esm.min.js"
+            }
+        }
+    </script>
+</head>
+<body>
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>

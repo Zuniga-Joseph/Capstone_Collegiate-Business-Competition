@@ -1,11 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import * as React from "react";
-
+import React from "react";
 
 export const Route = createFileRoute("/record/")({
   component: RecordPage,
 });
-
 function RecordPage() {
   const [isRecording, setIsRecording] = React.useState(false);
   const [mediaRecorder, setMediaRecorder] = React.useState<MediaRecorder | null>(null);

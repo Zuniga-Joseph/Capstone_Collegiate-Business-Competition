@@ -1,8 +1,14 @@
 import uuid
+from datetime import datetime
+from enum import Enum
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
 
+
+# =============================================================================
+# Users
+# =============================================================================
 
 # Shared properties
 class UserBase(SQLModel):
@@ -10,6 +16,7 @@ class UserBase(SQLModel):
     is_active: bool = True
     is_superuser: bool = False
     full_name: str | None = Field(default=None, max_length=255)
+    university: str | None = Field(default=None, max_length=200)
 
 
 # Properties to receive via API on creation
@@ -21,6 +28,7 @@ class UserRegister(SQLModel):
     email: EmailStr = Field(max_length=255)
     password: str = Field(min_length=8, max_length=40)
     full_name: str | None = Field(default=None, max_length=255)
+    university: str | None = Field(default=None, max_length=200)
 
 
 # Properties to receive via API on update, all are optional
@@ -32,6 +40,7 @@ class UserUpdate(UserBase):
 class UserUpdateMe(SQLModel):
     full_name: str | None = Field(default=None, max_length=255)
     email: EmailStr | None = Field(default=None, max_length=255)
+    university: str | None = Field(default=None, max_length=200)
 
 
 class UpdatePassword(SQLModel):
@@ -44,6 +53,9 @@ class User(UserBase, table=True):
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     hashed_password: str
     items: list["Item"] = Relationship(back_populates="owner", cascade_delete=True)
+    event_participations: list["EventParticipant"] = Relationship(
+        back_populates="user", cascade_delete=True
+    )
 
 
 # Properties to return via API, id is always required
@@ -54,6 +66,10 @@ class UserPublic(UserBase):
 class UsersPublic(SQLModel):
     data: list[UserPublic]
     count: int
+
+# =============================================================================
+# Items (remove later)
+# =============================================================================
 
 
 # Shared properties
@@ -92,9 +108,19 @@ class ItemsPublic(SQLModel):
     count: int
 
 
+# =============================================================================
+# Message
+# =============================================================================
+
+
 # Generic message
 class Message(SQLModel):
     message: str
+
+
+# =============================================================================
+# JWT Tokens
+# =============================================================================
 
 
 # JSON payload containing access token
@@ -108,6 +134,214 @@ class TokenPayload(SQLModel):
     sub: str | None = None
 
 
+# =============================================================================
+# Password
+# =============================================================================
+
+
 class NewPassword(SQLModel):
     token: str
     new_password: str = Field(min_length=8, max_length=40)
+
+
+# =============================================================================
+# Event
+# =============================================================================
+
+
+# Event status enum
+class EventStatus(str, Enum):
+    draft = "draft"
+    active = "active"
+    completed = "completed"
+    archived = "archived"
+
+
+# Event type enum
+class EventType(str, Enum):
+    virtual = "virtual"
+    in_person = "in_person"
+    hybrid = "hybrid"
+
+
+# Shared properties for Event
+class EventBase(SQLModel):
+    name: str = Field(min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    event_type: EventType = Field(default=EventType.virtual)
+    location: str | None = Field(default=None, max_length=255)
+    start_date: datetime
+    end_date: datetime
+    registration_deadline: datetime | None = Field(default=None)
+    status: EventStatus = Field(default=EventStatus.draft)
+
+
+# Properties to receive on event creation
+class EventCreate(EventBase):
+    participant_ids: list[uuid.UUID] = Field(default_factory=list)
+
+
+# Properties to receive on event update
+class EventUpdate(SQLModel):
+    name: str | None = Field(default=None, min_length=1, max_length=255)
+    description: str | None = Field(default=None, max_length=1000)
+    event_type: EventType | None = None
+    location: str | None = Field(default=None, max_length=255)
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    registration_deadline: datetime | None = None
+    status: EventStatus | None = None
+
+
+# Database model for Event
+class Event(EventBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    participants: list["EventParticipant"] = Relationship(
+        back_populates="event", cascade_delete=True
+    )
+
+
+# Properties to return via API
+class EventPublic(EventBase):
+    id: uuid.UUID
+    created_at: datetime
+    updated_at: datetime
+
+
+# List of events
+class EventsPublic(SQLModel):
+    data: list[EventPublic]
+    count: int
+
+
+# Event with participant details
+class EventWithParticipants(EventPublic):
+    participants: list[UserPublic]
+
+# =============================================================================
+# EventParticipant (link between User & Event)
+# =============================================================================
+
+
+# Link table for many-to-many relationship between Event and User
+class EventParticipant(SQLModel, table=True):
+    event_id: uuid.UUID = Field(
+        foreign_key="event.id", primary_key=True, ondelete="CASCADE"
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", primary_key=True, ondelete="CASCADE"
+    )
+    registered_at: datetime = Field(default_factory=datetime.utcnow)
+    event: Event = Relationship(back_populates="participants")
+    user: User = Relationship(back_populates="event_participations")
+
+
+# Add/remove participants request models
+class EventParticipantAdd(SQLModel):
+    user_ids: list[uuid.UUID]
+
+
+class EventParticipantRemove(SQLModel):
+    user_ids: list[uuid.UUID]
+
+
+# Event analytics/statistics
+class EventAnalytics(SQLModel):
+    event_id: uuid.UUID
+    total_participants: int
+    participants_by_school: dict[str, int]
+    registration_status: str
+
+
+# =============================================================================
+# Game Session
+# =============================================================================
+
+
+# Game Session status enum
+class GameSessionStatus(str, Enum):
+    waiting = "waiting"
+    in_progress = "in_progress"
+    completed = "completed"
+
+
+# Shared properties for GameSession
+class GameSessionBase(SQLModel):
+    event_id: uuid.UUID | None = Field(default=None, foreign_key="event.id")
+    join_code: str | None = Field(default=None, max_length=20)
+    status: GameSessionStatus = Field(default=GameSessionStatus.waiting)
+    question_count: int = Field(default=0)
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+
+
+# Properties to receive on game session creation
+class GameSessionCreate(SQLModel):
+    event_id: uuid.UUID | None = None
+    join_code: str | None = None
+
+
+# Properties to receive on game session update
+class GameSessionUpdate(SQLModel):
+    status: GameSessionStatus | None = None
+    question_count: int | None = None
+    start_time: datetime | None = None
+    end_time: datetime | None = None
+
+
+# Database model for GameSession
+class GameSession(GameSessionBase, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    participants: list["GameParticipant"] = Relationship(
+        back_populates="session", cascade_delete=True
+    )
+
+
+# Properties to return via API
+class GameSessionPublic(GameSessionBase):
+    id: uuid.UUID
+    created_at: datetime
+
+
+# List of game sessions
+class GameSessionsPublic(SQLModel):
+    data: list[GameSessionPublic]
+    count: int
+
+
+# Link table for game participants with scores
+class GameParticipant(SQLModel, table=True):
+    session_id: uuid.UUID = Field(
+        foreign_key="gamesession.id", primary_key=True, ondelete="CASCADE"
+    )
+    user_id: uuid.UUID = Field(
+        foreign_key="user.id", primary_key=True, ondelete="CASCADE"
+    )
+    score: int = Field(default=0)
+    rank: int | None = None
+    joined_at: datetime = Field(default_factory=datetime.utcnow)
+    session: GameSession = Relationship(back_populates="participants")
+
+
+# Game session with participant details
+class GameSessionWithParticipants(GameSessionPublic):
+    participants: list[UserPublic]
+
+
+# Game leaderboard entry
+class GameLeaderboardEntry(SQLModel):
+    user_id: uuid.UUID
+    full_name: str | None
+    university: str | None
+    score: int
+    rank: int
+
+
+# Game session leaderboard
+class GameSessionLeaderboard(SQLModel):
+    session_id: uuid.UUID
+    event_id: uuid.UUID | None
+    entries: list[GameLeaderboardEntry]
