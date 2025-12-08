@@ -19,9 +19,7 @@ interface Student {
   rank: number;
   score: number;
   university: string;
-  major: string;
   email: string;
-  gpa: number;
   skills: string[];
   projects: number;
   experience: string;
@@ -30,7 +28,6 @@ interface Student {
 const STUDENTS_PER_PAGE = 10;
 
 const universities = ['MIT', 'Stanford', 'Harvard', 'UC Berkeley', 'CMU', 'Yale', 'Princeton', 'Columbia'];
-const majors = ['Computer Science', 'Business Administration', 'Finance', 'Engineering', 'Data Science'];
 const skills = ['Python', 'JavaScript', 'React', 'Machine Learning', 'SQL', 'Java', 'C++', 'Leadership', 'Communication'];
 
 const fakeStudents: Student[] = Array.from({ length: 47 }, (_, i) => {
@@ -45,9 +42,7 @@ const fakeStudents: Student[] = Array.from({ length: 47 }, (_, i) => {
     rank: i + 1,
     score,
     university: universities[Math.floor(Math.random() * universities.length)],
-    major: majors[Math.floor(Math.random() * majors.length)],
     email: `${firstName.toLowerCase()}.${lastName.toLowerCase()}@university.edu`,
-    gpa: +(3.0 + Math.random() * 1.0).toFixed(2),
     skills: skills.sort(() => 0.5 - Math.random()).slice(0, 3 + Math.floor(Math.random() * 3)),
     projects: Math.floor(Math.random() * 10) + 3,
     experience: ['Internship at Tech Corp', 'Research Assistant', 'Freelance Developer', 'Startup Founder'][Math.floor(Math.random() * 4)]
@@ -334,22 +329,6 @@ function StudentDetailPage({ student, onBack }: { student: Student; onBack: () =
                 <p style={styles.infoValue}>{student.university}</p>
               </div>
             </div>
-
-            <div style={styles.infoItem}>
-              <span style={{ fontSize: '24px' }}>🎓</span>
-              <div>
-                <p style={styles.infoLabel}>Major</p>
-                <p style={styles.infoValue}>{student.major}</p>
-              </div>
-            </div>
-
-            <div style={styles.infoItem}>
-              <span style={{ fontSize: '24px' }}>⭐</span>
-              <div>
-                <p style={styles.infoLabel}>GPA</p>
-                <p style={styles.infoValue}>{student.gpa} / 4.0</p>
-              </div>
-            </div>
           </div>
 
           <div style={styles.section}>
@@ -441,7 +420,6 @@ function LeaderboardPage({ onStudentClick }: { onStudentClick: (student: Student
                 <th style={styles.th}>Name</th>
                 <th style={styles.th}>Score</th>
                 <th style={styles.th}>University</th>
-                <th style={styles.th}>Major</th>
               </tr>
             </thead>
             <tbody>
@@ -472,7 +450,6 @@ function LeaderboardPage({ onStudentClick }: { onStudentClick: (student: Student
                     <span style={styles.scoreCell}>{student.score}</span>
                   </td>
                   <td style={styles.td}>{student.university}</td>
-                  <td style={styles.td}>{student.major}</td>
                 </tr>
               ))}
             </tbody>

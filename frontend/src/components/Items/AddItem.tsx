@@ -7,7 +7,7 @@ import {
   VStack,
 } from "@chakra-ui/react"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { type SubmitHandler, useForm } from "react-hook-form"
 import { FaPlus } from "react-icons/fa"
 
@@ -26,8 +26,14 @@ import {
 } from "../ui/dialog"
 import { Field } from "../ui/field"
 
+interface ItemCreateExtended extends ItemCreate {
+  event_time?: string
+}
+
 const AddItem = () => {
   const [isOpen, setIsOpen] = useState(false)
+  const [questionsFile, setQuestionsFile] = useState<File | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const queryClient = useQueryClient()
   const { showSuccessToast } = useCustomToast()
   const {
@@ -35,21 +41,51 @@ const AddItem = () => {
     handleSubmit,
     reset,
     formState: { errors, isValid, isSubmitting },
-  } = useForm<ItemCreate>({
+  } = useForm<ItemCreateExtended>({
     mode: "onBlur",
     criteriaMode: "all",
     defaultValues: {
       title: "",
       description: "",
+      event_time: "",
     },
   })
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.type === "application/json") {
+        setQuestionsFile(file)
+      } else {
+        alert("Please upload a JSON file")
+      }
+    }
+  }
+
   const mutation = useMutation({
-    mutationFn: (data: ItemCreate) =>
-      ItemsService.createItem({ requestBody: data }),
+    mutationFn: async (data: ItemCreateExtended) => {
+      // If there's a file, use FormData
+      if (questionsFile) {
+        const formData = new FormData()
+        formData.append("title", data.title)
+        if (data.description) {
+          formData.append("description", data.description)
+        }
+        if (data.event_time) {
+          formData.append("event_time", data.event_time)
+        }
+        formData.append("questions_file", questionsFile)
+        
+        return ItemsService.createItem({ requestBody: formData })
+      } else {
+        // Otherwise use regular JSON
+        return ItemsService.createItem({ requestBody: data })
+      }
+    },
     onSuccess: () => {
       showSuccessToast("Item created successfully.")
       reset()
+      setQuestionsFile(null)
       setIsOpen(false)
     },
     onError: (err: ApiError) => {
@@ -60,7 +96,7 @@ const AddItem = () => {
     },
   })
 
-  const onSubmit: SubmitHandler<ItemCreate> = (data) => {
+  const onSubmit: SubmitHandler<ItemCreateExtended> = (data) => {
     mutation.mutate(data)
   }
 
@@ -110,6 +146,39 @@ const AddItem = () => {
                   placeholder="Description"
                   type="text"
                 />
+              </Field>
+
+              <Field
+                invalid={!!errors.event_time}
+                errorText={errors.event_time?.message}
+                label="Event Time"
+              >
+                <Input
+                  {...register("event_time")}
+                  placeholder="Select event date and time"
+                  type="datetime-local"
+                />
+              </Field>
+
+              <Field label="Questions File (JSON)">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileChange}
+                  style={{ display: 'none' }}
+                />
+                <Button 
+                  variant="outline" 
+                  w="full"
+                  onClick={() => fileInputRef.current?.click()}
+                  type="button"
+                >
+                  {questionsFile ? questionsFile.name : "Choose JSON file"}
+                </Button>
+                <Text fontSize="xs" color="gray.500" mt={1}>
+                  Optional: Upload questions in JSON format
+                </Text>
               </Field>
             </VStack>
           </DialogBody>
