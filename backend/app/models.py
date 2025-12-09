@@ -317,7 +317,7 @@ class QuestionSet(QuestionSetBase, table=True):
     )
 
     owner: "User" = Relationship(back_populates="question_sets")
-    questions: list["Question"] = Relationship(back_populates="question")
+    questions: list["Question"] = Relationship(back_populates="question_set")
 
 
 # Add backref on User (inside User class in models.py)

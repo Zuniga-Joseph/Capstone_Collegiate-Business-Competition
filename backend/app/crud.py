@@ -1,3 +1,4 @@
+from fastapi import HTTPException, status
 import uuid
 from datetime import datetime
 from typing import Any
@@ -212,11 +213,17 @@ def delete_question_set_for_owner(
 def _validate_question_payload(q: QuestionCreate):
     # Enforce your frontend rules: 4 options, exactly 1 correct
     if len(q.options) != 4:
-        raise ValueError("Each question must have exactly 4 options.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Each question must have exactly 4 options.",
+        )
 
     correct_count = sum(1 for opt in q.options if opt.is_correct)
     if correct_count != 1:
-        raise ValueError("Each question must have exactly one correct option.")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Each question must have exactly one correct option.",
+        )
 
 
 def create_question(
@@ -225,7 +232,6 @@ def create_question(
     question_in: QuestionCreate,
     owner_id: uuid.UUID,
 ) -> Question:
-
     # Ensure question set belongs to this recruiter
     qs = get_question_set_for_owner(
         session=session,
@@ -233,18 +239,26 @@ def create_question(
         owner_id=owner_id,
     )
     if qs is None:
-        raise ValueError("Question set not found or does not belong to recruiter.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question set not found or does not belong to recruiter.",
+        )
 
+    # Business rules
     _validate_question_payload(question_in)
 
-    db_question = Question.model_validate(
-        question_in,
-        update={"question_set_id": qs.id},
+    # ---- Create Question row WITHOUT options ----
+    db_question = Question(
+        question_set_id=qs.id,
+        question_text=question_in.question_text,
+        category=question_in.category,
+        difficulty=question_in.difficulty,
+        explanation=question_in.explanation,
     )
     session.add(db_question)
-    session.flush()  # now db_question.id is populated
+    session.flush()  # ensures db_question.id is populated
 
-    # Create answer options
+    # ---- Create QuestionOption rows ----
     for opt in question_in.options:
         opt_obj = QuestionOption(
             question_id=db_question.id,
@@ -271,18 +285,30 @@ def create_questions_bulk(
         owner_id=owner_id,
     )
     if qs is None:
-        raise ValueError("Question set not found or does not belong to recruiter.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Question set not found or does not belong to recruiter.",
+        )
 
-    created = []
+    created: list[Question] = []
 
     for q in bulk_in.questions:
-        q.question_set_id = qs.id  # overwrite client-provided ID for safety
+        # Overwrite any incoming question_set_id for safety
+        q.question_set_id = qs.id
         _validate_question_payload(q)
 
-        db_question = Question.model_validate(q)
+        # Create Question row
+        db_question = Question(
+            question_set_id=qs.id,
+            question_text=q.question_text,
+            category=q.category,
+            difficulty=q.difficulty,
+            explanation=q.explanation,
+        )
         session.add(db_question)
         session.flush()
 
+        # Create associated options
         for opt in q.options:
             opt_obj = QuestionOption(
                 question_id=db_question.id,
