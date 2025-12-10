@@ -14,6 +14,7 @@ interface AnswerOption {
 }
 
 interface QuestionPayload {
+  question_set_id: string
   question_text: string
   category: string
   difficulty: Difficulty
@@ -22,6 +23,9 @@ interface QuestionPayload {
 }
 
 function QuestionEntryPage() {
+  // NEW: Question Set ID
+  const [questionSetId, setQuestionSetId] = useState("")
+
   const [questionText, setQuestionText] = useState("")
   const [category, setCategory] = useState("")
   const [difficulty, setDifficulty] = useState<Difficulty>("medium")
@@ -42,7 +46,7 @@ function QuestionEntryPage() {
   const [importedCount, setImportedCount] = useState<number | null>(null)
   const [isImporting, setIsImporting] = useState(false)
 
-  // NEW: questions waiting for confirmation
+  // questions waiting for confirmation
   const [pendingImportQuestions, setPendingImportQuestions] = useState<
     QuestionPayload[] | null
   >(null)
@@ -60,6 +64,7 @@ function QuestionEntryPage() {
   }
 
   const validateForm = (): string | null => {
+    if (!questionSetId.trim()) return "Question Set ID is required."
     if (!questionText.trim()) return "Question text is required."
     if (!category.trim()) return "Category is required."
 
@@ -90,6 +95,7 @@ function QuestionEntryPage() {
     }
 
     const payload: QuestionPayload = {
+      question_set_id: questionSetId.trim(),
       question_text: questionText.trim(),
       category: category.trim(),
       difficulty,
@@ -103,8 +109,31 @@ function QuestionEntryPage() {
     try {
       setIsSubmitting(true)
 
-      // TODO: replace with your backend call
-      console.log("Submitting single question:", payload)
+      // ⬇️ Grab JWT from localStorage (or your auth hook if you have one)
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        throw new Error("You must be logged in to submit questions.")
+      }
+
+      const res = await fetch("http://localhost:8000/api/v1/questions/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        let detail = "Failed to save question."
+        try {
+          const data = await res.json()
+          detail = data.detail ?? detail
+        } catch {
+          // ignore JSON parse error
+        }
+        throw new Error(detail)
+      }
 
       setSuccessMessage("Question saved successfully.")
       setQuestionText("")
@@ -229,7 +258,9 @@ function QuestionEntryPage() {
         )
       }
 
+      // NOTE: question_set_id will be injected later when we send to backend
       questions.push({
+        question_set_id: "",
         question_text: qText,
         category,
         difficulty: difficultyLower as Difficulty,
@@ -244,10 +275,14 @@ function QuestionEntryPage() {
     return questions
   }
 
-  // NEW: user clicks "Submit all questions" on confirmation screen
   const handleConfirmImport = async () => {
     if (!pendingImportQuestions || pendingImportQuestions.length === 0) {
       setImportError("No questions to submit.")
+      return
+    }
+
+    if (!questionSetId.trim()) {
+      setImportError("Question Set ID is required for bulk import.")
       return
     }
 
@@ -257,19 +292,40 @@ function QuestionEntryPage() {
     try {
       setIsImporting(true)
 
-      // TODO: replace with your real bulk backend call
-      // Example:
-      // const res = await fetch("http://localhost:8000/api/questions/bulk", {
-      //   method: "POST",
-      //   headers: { "Content-Type": "application/json" },
-      //   body: JSON.stringify({ questions: pendingImportQuestions }),
-      // })
-      // if (!res.ok) {
-      //   const data = await res.json()
-      //   throw new Error(data.detail ?? "Bulk import failed")
-      // }
+      const token = localStorage.getItem("access_token")
+      if (!token) {
+        throw new Error("You must be logged in to submit questions.")
+      }
 
-      console.log("Submitting bulk questions:", pendingImportQuestions)
+      const qsId = questionSetId.trim()
+
+      const bulkPayload = {
+        question_set_id: qsId,
+        questions: pendingImportQuestions.map((q) => ({
+          ...q,
+          question_set_id: qsId,
+        })),
+      }
+
+      const res = await fetch("http://localhost:8000/api/v1/questions/bulk", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(bulkPayload),
+      })
+
+      if (!res.ok) {
+        let detail = "Bulk import failed."
+        try {
+          const data = await res.json()
+          detail = data.detail ?? detail
+        } catch {
+          // ignore
+        }
+        throw new Error(detail)
+      }
 
       setImportSuccess(
         `Successfully submitted ${pendingImportQuestions.length} question(s).`,
@@ -283,7 +339,6 @@ function QuestionEntryPage() {
     }
   }
 
-  // NEW: user cancels / discards imported questions
   const handleCancelImport = () => {
     setPendingImportQuestions(null)
     setImportSuccess("Import canceled. No questions were submitted.")
@@ -350,6 +405,26 @@ function QuestionEntryPage() {
           onSubmit={handleSubmit}
           style={{ display: "flex", flexDirection: "column", gap: "16px" }}
         >
+          {/* Question Set ID */}
+          <div>
+            <label style={{ fontWeight: 600 }}>
+              Question Set ID <span style={{ color: "red" }}>*</span>
+            </label>
+            <input
+              type="text"
+              value={questionSetId}
+              onChange={(e) => setQuestionSetId(e.target.value)}
+              placeholder="Paste the Question Set UUID here"
+              style={{
+                width: "100%",
+                padding: "8px",
+                borderRadius: "6px",
+                border: "1px solid #ccc",
+                marginTop: "4px",
+              }}
+            />
+          </div>
+
           {/* Question */}
           <div>
             <label style={{ fontWeight: 600 }}>
@@ -368,64 +443,63 @@ function QuestionEntryPage() {
             />
           </div>
 
-        {/* Category + Difficulty */}
-        <div
-          style={{
-            display: "flex",
-            gap: "16px",
-            flexWrap: "wrap",
-          }}
-        >
+          {/* Category + Difficulty */}
           <div
             style={{
-              flex: 1,
-              minWidth: "260px",
               display: "flex",
-              flexDirection: "column",
-              gap: "4px",
+              gap: "16px",
+              flexWrap: "wrap",
             }}
           >
-            <label style={{ fontWeight: 600 }}>
-              Category <span style={{ color: "red" }}>*</span>
-            </label>
-            <input
-              type="text"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
+            <div
               style={{
-                width: "100%",
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
-              }}
-            />
-          </div>
-
-          <div
-            style={{
-              minWidth: "180px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "4px",
-            }}
-          >
-            <label style={{ fontWeight: 600 }}>Difficulty</label>
-            <select
-              value={difficulty}
-              onChange={(e) => setDifficulty(e.target.value as Difficulty)}
-              style={{
-                padding: "8px",
-                borderRadius: "6px",
-                border: "1px solid #ccc",
+                flex: 1,
+                minWidth: "260px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
               }}
             >
-              <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
-              <option value="hard">Hard</option>
-            </select>
-          </div>
-        </div>
+              <label style={{ fontWeight: 600 }}>
+                Category <span style={{ color: "red" }}>*</span>
+              </label>
+              <input
+                type="text"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "8px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                }}
+              />
+            </div>
 
+            <div
+              style={{
+                minWidth: "180px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "4px",
+              }}
+            >
+              <label style={{ fontWeight: 600 }}>Difficulty</label>
+              <select
+                value={difficulty}
+                onChange={(e) => setDifficulty(e.target.value as Difficulty)}
+                style={{
+                  padding: "8px",
+                  borderRadius: "6px",
+                  border: "1px solid #ccc",
+                }}
+              >
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+              </select>
+            </div>
+          </div>
 
           {/* Options */}
           <div style={{ marginTop: "8px" }}>
